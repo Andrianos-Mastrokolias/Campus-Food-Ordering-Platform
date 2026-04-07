@@ -1,7 +1,0 @@
-1.	As a user, I want to sign up and log in using a third-party identity provider, so that I can securely access my student, vendor, or admin dashboard. 
-2.	As a vendor, I want to create and update menu items, so that students can view accurate food items, prices, descriptions, and availability. 
-3.	As a user, I want to apply for an admin role, so that an existing admin can review my request and grant me admin privileges if approved. 
-4.	As a student, I want to place an order from one or more vendors, so that I can collect my food without waiting in long queues. 
-5.	As an admin, I want to approve or suspend vendor accounts, so that I can control which vendors are allowed to operate on the platform. 
-
-
