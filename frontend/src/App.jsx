@@ -29,6 +29,8 @@ function App(){
     available: true,  
   });
 
+  const [editingItemId, setEditingItemId] = useState(null);//stores which item is being edited
+
   const handleInputChange = (event) => { //runs everytime  the user types in an input or changes the checkbox
     const {name, value, type, checked} = event.target;
 
@@ -40,16 +42,35 @@ function App(){
   const handleSubmit = (event) => {
     event.preventDefault();//so the page does not reload automatically
 
-    const newMenuItem = { //creating a new object from the values the vendor entered
-      id: Date.now(), //unique id for each menu item
-      name: formData.name,
-      description: formData.description,
-      price: formData.price,
-      photoUrl: formData.photoUrl,
-      available: formData.available,
-    };
+    if (editingItemId !== null) { //edit existing item, replace with form values
+      setMenuItems((previousMenuItems) =>
+        previousMenuItems.map((item) =>
+          item.id === editingItemId
+            ? {
+                ...item,
+                name: formData.name,
+                description: formData.description,
+                price: formData.price,
+                photoUrl: formData.photoUrl,
+                available: formData.available,
+              }
+            : item
+        )
+      );
+  
+      setEditingItemId(null);
+    } else { //new item
+      const newMenuItem = {
+        id: Date.now(),
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        photoUrl: formData.photoUrl,
+        available: formData.available,
+      };
 
-    setMenuItems((previousMenuItems) => [...previousMenuItems, newMenuItem]);//adds the new item to the end of the existing menu list by creating a new array with existing items plus new item
+      setMenuItems((previousMenuItems) => [...previousMenuItems, newMenuItem]);//adds the new item to the end of the existing menu list by creating a new array with existing items plus new item
+    }
 
     setFormData({ //after adding new item, clears the form if the vendor wants to add another item
       name: "",
@@ -70,6 +91,18 @@ function App(){
       );
   };
 
+  const handleEditClick = (item) => { //when vendor clicks edit, it copies the details into the form and stores the item's id in editingItemId
+    setFormData({
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      photoUrl: item.photoUrl,
+      available: item.available,
+    });
+
+    setEditingItemId(item.id);
+  }
+
   return ( //what gets displayed ie what the user sees
     <div className="app"> 
       <header className="header">
@@ -79,7 +112,7 @@ function App(){
 
       <main className="container"> 
         <section className="form-section">
-          <h2>Add Menu Item</h2>
+          <h2>{editingItemId !== null ? "Edit Menu Item" : "Add Menu Item"}</h2>
 
           <form className="menu-form" onSubmit={handleSubmit}>
             <input
@@ -122,7 +155,9 @@ function App(){
               Available
             </label>
 
-            <button type="submit">Add Item</button>
+            <button type="submit"> 
+              {editingItemId !== null ? "Update Item" : "Add Item"}
+            </button>
           </form>
         </section>
 
@@ -140,7 +175,10 @@ function App(){
                 </p>
 
                 <div className="button-row">
-                  <button className="edit-btn" type="button">
+                  <button className="edit-btn"
+                  type="button"
+                  onClick={() => handleEditClick(item)}
+                  >
                     Edit
                   </button>
                   <button 
