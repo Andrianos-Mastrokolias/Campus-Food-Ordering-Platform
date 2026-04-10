@@ -1,12 +1,14 @@
+import {useState} from "react"; //useState lets React store data that can change while the app is running
 import "./App.css";
 
-function App() {
-  const sampleMenuItems = [
+function App(){
+  const [menuItems, setMenuItems] = useState([ //stores current menu items shown on page
     {
       id: 1,
       name: "Chicken Burger",
       description: "Grilled chicken burger with chips",
       price: "R65.00",
+      photoUrl: "",
       available: true,
     },
     {
@@ -14,28 +16,109 @@ function App() {
       name: "Veg Wrap",
       description: "Fresh veggie wrap with hummus",
       price: "R55.00",
+      photoUrl: "",
       available: false,
     },
-  ];
+  ]);
 
-  return (
-    <div className="app">
+  const [formData, setFormData] = useState({ //stores what the vendor is typing into the form right now
+    name: "",
+    description: "",
+    price: "",
+    photoUrl: "",
+    available: true,  
+  });
+
+  const handleInputChange = (event) => { //runs everytime  the user types in an input or changes the checkbox
+    const {name, value, type, checked} = event.target;
+
+    setFormData((previousFormData) => ({
+      ...previousFormData, [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();//so the page does not reload automatically
+
+    const newMenuItem = { //creating a new object from the values the vendor entered
+      id: Date.now(), //unique id for each menu item
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      photoUrl: formData.photoUrl,
+      available: formData.available,
+    };
+
+    setMenuItems((previousMenuItems) => [...previousMenuItems, newMenuItem]);//adds the new item to the end of the existing menu list by creating a new array with existing items plus new item
+
+    setFormData({ //after adding new item, clears the form if the vendor wants to add another item
+      name: "",
+      description: "",
+      price: "",
+      photoUrl: "",
+      available: true,
+    });
+  };
+
+  const toggleAvailability = (id) => { //takes an item id
+    setMenuItems((previousMenuItems) => //updates using the exiting previous menu items
+      previousMenuItems.map((item) => //map goes through every item in the array, if it was the one clicked, updates it
+        item.id === id //checks if the current item is the one we want to update
+          ? {...item, available: !item.available} //copy all existing item data, replaces available with opposite value
+          : item
+        )
+      );
+  };
+
+  return ( //what gets displayed ie what the user sees
+    <div className="app"> 
       <header className="header">
         <h1>Vendor Menu Management</h1>
         <p>Manage your food items, prices, descriptions, and availability.</p>
       </header>
 
-      <main className="container">
+      <main className="container"> 
         <section className="form-section">
           <h2>Add Menu Item</h2>
-          <form className="menu-form">
-            <input type="text" placeholder="Item name" />
-            <textarea placeholder="Item description"></textarea>
-            <input type="text" placeholder="Price e.g. R65.00" />
-            <input type="text" placeholder="Photo URL" />
+
+          <form className="menu-form" onSubmit={handleSubmit}>
+            <input
+              type="text"
+              name="name"
+              placeholder="Item name"
+              value={formData.name}
+              onChange={handleInputChange}
+            />
+
+            <textarea
+              name="description"
+              placeholder="Item description"
+              value={formData.description}
+              onChange={handleInputChange}
+            ></textarea>
+
+            <input
+              type="text"
+              name="price"
+              placeholder="Price e.g. R65.00"
+              value={formData.price}
+              onChange={handleInputChange}
+            />
+
+            <input
+              type="text"
+              name="photoUrl"
+              value={formData.photoUrl}
+              onChange={handleInputChange}
+            />
 
             <label className="checkbox-row">
-              <input type="checkbox" defaultChecked />
+              <input
+                type="checkbox"
+                name="available"
+                checked={formData.available}
+                onChange={handleInputChange}
+              />
               Available
             </label>
 
@@ -47,7 +130,7 @@ function App() {
           <h2>Current Menu</h2>
 
           <div className="menu-list">
-            {sampleMenuItems.map((item) => (
+            {menuItems.map((item) => (
               <div className="menu-card" key={item.id}>
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
@@ -57,13 +140,19 @@ function App() {
                 </p>
 
                 <div className="button-row">
-                  <button className="edit-btn">Edit</button>
-                  <button className="soldout-btn">
+                  <button className="edit-btn" type="button">
+                    Edit
+                  </button>
+                  <button 
+                    className="soldout-btn"
+                    type="button"
+                    onClick={() => toggleAvailability(item.id)} 
+                  >
                     {item.available ? "Mark as Sold Out" : "Mark as Available"}
                   </button>
                 </div>
-              </div>
-            ))}
+              </div>    
+           ))}
           </div>
         </section>
       </main>
