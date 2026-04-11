@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
@@ -69,39 +69,57 @@ export default function VendorDashboard() {
     }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     if (editingItemId !== null) {
-      setMenuItems((previousMenuItems) =>
-        previousMenuItems.map((item) =>
-          item.id === editingItemId
-            ? {
-                ...item,
-                name: formData.name,
-                description: formData.description,
-                price: formData.price,
-                photoUrl: formData.photoUrl,
-                available: formData.available,
-              }
-            : item
-        )
-      );
-
-      setEditingItemId(null);
-    } else {
-      const newMenuItem = {
-        id: Date.now(),
+      const updatedMenuItem = {
         name: formData.name,
         description: formData.description,
         price: formData.price,
         photoUrl: formData.photoUrl,
         available: formData.available,
       };
-
-      setMenuItems((previousMenuItems) => [...previousMenuItems, newMenuItem]);
+  
+      try {
+        const itemRef = doc(db, "menuItems", editingItemId);
+  
+        await updateDoc(itemRef, updatedMenuItem);
+  
+        setMenuItems((previousMenuItems) =>
+          previousMenuItems.map((item) =>
+            item.id === editingItemId
+              ? { ...item, ...updatedMenuItem }
+              : item
+          )
+        );
+  
+        setEditingItemId(null);
+      } catch (error) {
+        console.error("Error updating menu item:", error.message);
+      }
+    } else {
+      const newMenuItem = {
+        vendorId: user.uid,
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        photoUrl: formData.photoUrl,
+        available: formData.available,
+      };
+  
+      addDoc(collection(db, "menuItems"), newMenuItem)
+        .then((docRef) => {
+          setMenuItems((previousMenuItems) => [
+            ...previousMenuItems,
+            { id: docRef.id, ...newMenuItem },
+          ]);
+        })
+        .catch((error) => {
+          console.error("Error adding menu item:", error.message);
+        });
     }
-
+  
     setFormData({
       name: "",
       description: "",
@@ -111,12 +129,27 @@ export default function VendorDashboard() {
     });
   };
 
-  const toggleAvailability = (id) => {
-    setMenuItems((previousMenuItems) =>
-      previousMenuItems.map((item) =>
-        item.id === id ? { ...item, available: !item.available } : item
-      )
-    );
+  const toggleAvailability = async (id) => {
+    const selectedItem = menuItems.find((item) => item.id === id);
+  
+    if (!selectedItem) return;
+  
+    const newAvailability = !selectedItem.available;
+  
+    try {
+      const itemRef = doc(db, "menuItems", id);
+      await updateDoc(itemRef, {
+        available: newAvailability,
+      });
+  
+      setMenuItems((previousMenuItems) =>
+        previousMenuItems.map((item) =>
+          item.id === id ? { ...item, available: newAvailability } : item
+        )
+      );
+    } catch (error) {
+      console.error("Error updating availability:", error.message);
+    }
   };
 
   const handleEditClick = (item) => {
