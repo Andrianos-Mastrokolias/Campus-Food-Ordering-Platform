@@ -71,12 +71,31 @@ export default function VendorDashboard() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const trimmedName = formData.name.trim();
+    const trimmedDescription = formData.description.trim();
+    const trimmedPrice = formData.price.trim();
+
+    if (!trimmedName) {
+      alert("Please enter an item name.");
+      return;
+    }
+
+    if (!trimmedDescription) {
+      alert("Please enter an item description.");
+      return;
+    }
+
+    if (!trimmedPrice) {
+      alert("Please enter a price.");
+      return;
+    }
   
     if (editingItemId !== null) {
       const updatedMenuItem = {
-        name: formData.name,
-        description: formData.description,
-        price: formData.price,
+        name: trimmedName,
+        description: trimmedDescription,
+        price: trimmedPrice,
         photoUrl: formData.photoUrl,
         available: formData.available,
       };
@@ -101,9 +120,9 @@ export default function VendorDashboard() {
     } else {
       const newMenuItem = {
         vendorId: user.uid,
-        name: formData.name,
-        description: formData.description,
-        price: formData.price,
+        name: trimmedName,
+        description: trimmedDescription,
+        price: trimmedPrice,
         photoUrl: formData.photoUrl,
         available: formData.available,
       };
