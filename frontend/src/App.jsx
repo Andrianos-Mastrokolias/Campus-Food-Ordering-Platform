@@ -1,7 +1,14 @@
-import {useState} from "react"; //useState lets React store data that can change while the app is running
+import { useEffect, useState } from "react"; //useState lets React store data that can change while the app is running
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "./firebase";
+import { useAuth } from "./context/AuthContext";
 import "./App.css";
 
+
 function App(){
+
+  const { user, role, loading } = useAuth();
+
   const [menuItems, setMenuItems] = useState([ //stores current menu items shown on page
     {
       id: 1,
@@ -28,6 +35,29 @@ function App(){
     photoUrl: "",
     available: true,  
   });
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      if (loading || !user || role !== "vendor") return;
+
+      try{
+        const menuItemsRef = collection(db, "menuItems");
+        const q = query(menuItemsRef, where("vendorId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+
+        const items = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setMenuItems(items);
+      } catch (error) {
+        console.error("Error fetching menu items: ", error.message);
+      }
+    };
+
+    fetchMenuItems();
+  },  [user, role, loading]);
 
   const [editingItemId, setEditingItemId] = useState(null);//stores which item is being edited
 
