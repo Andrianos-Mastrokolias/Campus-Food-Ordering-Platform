@@ -252,6 +252,16 @@ export default function VendorDashboard() {
           <div className="menu-list">
             {menuItems.map((item) => (
               <div className="menu-card" key={item.id}>
+                {item.photoUrl ? (
+                  <img
+                    src={item.photoUrl}
+                    alt={item.name}
+                    className="menu-image"
+                  />
+                ) : (
+                  <div className="menu-image-placeholder">Image not available yet</div>
+                )}
+
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
                 <p className="price">{item.price}</p>
