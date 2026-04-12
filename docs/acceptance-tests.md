@@ -3,13 +3,18 @@
 
 ### UAT 1
 Given I am a new user
-When I choose a third-party identity provider and complete sign up
-Then my account should be created and I should be logged into the platform
+When I sign in with Google
+Then my user account should be created in Firestore and I should be logged into the platform
 
 ### UAT 2
 Given I am an existing user
-When I log in using a third-party identity provider
-Then I should be granted access to the platform according to my role
+When I log in with google
+Then I should be logged into the platform and redirected according to my role
+
+### UAT 3
+Given I am logged in as a user with a specific role
+When I attempt to access a page that is not permitted for my role
+Then I should be redirected to the unauthorized page
 
 ---
 
