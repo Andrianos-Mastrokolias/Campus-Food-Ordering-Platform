@@ -24,7 +24,7 @@ export default function App() {
       <Route
         path="/vendor/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["vendor", "admin"]}>
+          <ProtectedRoute allowedRoles={["vendor"]}>
             <VendorDashboard />
           </ProtectedRoute>
         }
