@@ -183,6 +183,18 @@ export default function VendorDashboard() {
     setEditingItemId(item.id);
   };
 
+  const handleCancelEdit = () => {
+    setEditingItemId(null);
+  
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      photoUrl: "",
+      available: true,
+    });
+  };
+
   if (loading) {
     return <p style={{ textAlign: "center", marginTop: "80px" }}>Loading...</p>;
   }
@@ -240,9 +252,21 @@ export default function VendorDashboard() {
               Available
             </label>
 
-            <button type="submit">
-              {editingItemId !== null ? "Update Item" : "Add Item"}
-            </button>
+            <div className="form-buttons">
+              <button type="submit">
+                {editingItemId !== null ? "Update Item" : "Add Item"}
+              </button>
+
+              {editingItemId !== null && (
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={handleCancelEdit}
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
           </form>
         </section>
 
