@@ -31,12 +31,12 @@ jobs:
           api_location: ""
           output_location: "dist"
         env:
-          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
-          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
-          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
-          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
-          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_API_KEY: AIzaSyAodPISMTOM4irn-cLtWz6Zj5yBRHYsuVM
+          VITE_FIREBASE_AUTH_DOMAIN: campus-food-app-f3973.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: campus-food-app-f3973
+          VITE_FIREBASE_STORAGE_BUCKET: campus-food-app-f3973.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: 278743038373
+          VITE_FIREBASE_APP_ID: 1:278743038373:web:8029f79ce906d7c6cb104c
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
