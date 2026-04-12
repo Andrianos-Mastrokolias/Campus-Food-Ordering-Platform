@@ -48,15 +48,20 @@ Then my role should be updated to admin
 
 ## User Story 4: Student Order Placement
 
-### UAT 1
+### UAT 1 — Add to Cart
 Given I am logged in as a student
-When I select items from one or more vendors and place an order
-Then the order should be successfully recorded in the system
+When I select items from one or more vendors
+Then the items should appear in my cart
 
-### UAT 2
-Given I have placed an order
-When the order is submitted
-Then I should receive confirmation that my order was received
+### UAT 2 — Remove from Cart
+Given items exist in my cart
+When I remove an item
+Then the item should be removed from the cart
+
+### UAT 2 — Checkout Flow
+Given I have items in my cart
+When I click checkout
+Then the cart should be cleared and a success message should be displayed
 
 ---
 
