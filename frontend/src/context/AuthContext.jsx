@@ -10,6 +10,7 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null);
+  const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +23,9 @@ export function AuthProvider({ children }) {
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
-            setRole(userSnap.data().role);
+            const userData = userSnap.data();
+            setRole(userData.role || "student");
+            setStatus(userData.status || null);
           } else {
             await setDoc(userRef, {
               uid: firebaseUser.uid,
@@ -31,16 +34,20 @@ export function AuthProvider({ children }) {
               role: "student",
               createdAt: new Date(),
             });
+
             setRole("student");
+            setStatus(null);
           }
         } else {
           setUser(null);
           setRole(null);
+          setStatus(null);
         }
       } catch (error) {
         console.error("AuthContext error:", error.message);
         setUser(null);
         setRole(null);
+        setStatus(null);
       } finally {
         setLoading(false);
       }
@@ -50,7 +57,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
+    <AuthContext.Provider value={{ user, role, status, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );

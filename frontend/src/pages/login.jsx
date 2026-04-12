@@ -5,20 +5,30 @@ import { useAuth } from "../context/AuthContext";
 import { useEffect } from "react";
 
 export default function Login() {
-  const { user, role } = useAuth();
+  const { user, role, status } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user && role) {
       if (role === "vendor") {
-        navigate("/vendor/dashboard");
+        if (status === "approved") {
+          navigate("/vendor/dashboard");
+        } else if (status === "pending") {
+          alert("Your vendor account is pending admin approval.");
+          navigate("/unauthorized");
+        } else if (status === "suspended") {
+          alert("Your vendor account has been suspended.");
+          navigate("/unauthorized");
+        } else {
+          navigate("/unauthorized");
+        }
       } else if (role === "admin") {
         navigate("/admin/dashboard");
       } else {
         navigate("/home");
       }
     }
-  }, [user, role, navigate]);
+  }, [user, role, status, navigate]);
 
   const handleLogin = async () => {
     try {
