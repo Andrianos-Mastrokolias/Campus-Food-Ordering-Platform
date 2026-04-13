@@ -446,4 +446,4 @@ This implementation is part of the COMS3009A Software Design project.
 
 **Last Updated:** April 12, 2026  
 **Version:** 1.0  
-**Author/s:** Maahira Essa
+**Author:** [Your Name]
