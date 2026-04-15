@@ -10,7 +10,7 @@ import {
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from "../firebase";
 
 /**
  * Admin Application Service
