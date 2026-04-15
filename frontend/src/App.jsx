@@ -5,13 +5,15 @@ import VendorDashboard from "./pages/VendorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Unauthorized from "./pages/unauthorized";
 import ProtectedRoute from "./components/protectedRoute";
+import AdminApplicationForm from "./components/AdminApplication/AdminApplicationForm";
+import AdminReviewDashboard from "./components/AdminApplication/AdminReviewDashboard";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
-
+      
       <Route
         path="/home"
         element={
@@ -20,7 +22,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
+      
       <Route
         path="/vendor/dashboard"
         element={
@@ -29,7 +31,7 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-
+      
       <Route
         path="/admin/dashboard"
         element={
@@ -39,6 +41,24 @@ export default function App() {
         }
       />
 
+      <Route
+        path="/apply-admin"
+        element={
+          <ProtectedRoute allowedRoles={["student", "vendor"]}>
+            <AdminApplicationForm />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/applications"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminReviewDashboard />
+          </ProtectedRoute>
+        }
+      />
+      
       <Route path="*" element={<Login />} />
     </Routes>
   );
