@@ -10,37 +10,22 @@ import {
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from '../firebase.js';
 
-/**
- * Admin Application Service
- * Handles all admin role application operations
- */
 class AdminApplicationService {
   
   constructor() {
     this.collectionName = 'adminApplications';
   }
 
-  /**
-   * Submit a new admin role application
-   * @param {string} userId - ID of the user applying
-   * @param {string} userEmail - Email of the user
-   * @param {string} userName - Display name of the user
-   * @param {string} currentRole - Current role of the user
-   * @param {string} reason - Reason for wanting admin privileges
-   * @returns {Promise<string>} Application ID
-   */
   async submitApplication(userId, userEmail, userName, currentRole, reason) {
     try {
-      // Check if user already has a pending application
       const existingApp = await this.getUserPendingApplication(userId);
       
       if (existingApp) {
         throw new Error('You already have a pending application');
       }
 
-      // Create new application
       const applicationData = {
         userId,
         userEmail,
@@ -63,10 +48,6 @@ class AdminApplicationService {
     }
   }
 
-  /**
-   * Get all pending applications (for admins)
-   * @returns {Promise<Array>} Array of pending applications
-   */
   async getPendingApplications() {
     try {
       const q = query(
@@ -92,10 +73,6 @@ class AdminApplicationService {
     }
   }
 
-  /**
-   * Get all applications (for admins)
-   * @returns {Promise<Array>} Array of all applications
-   */
   async getAllApplications() {
     try {
       const q = query(
@@ -120,11 +97,6 @@ class AdminApplicationService {
     }
   }
 
-  /**
-   * Get applications by user ID
-   * @param {string} userId - User ID
-   * @returns {Promise<Array>} Array of user's applications
-   */
   async getUserApplications(userId) {
     try {
       const q = query(
@@ -150,11 +122,6 @@ class AdminApplicationService {
     }
   }
 
-  /**
-   * Get user's pending application if exists
-   * @param {string} userId - User ID
-   * @returns {Promise<Object|null>} Pending application or null
-   */
   async getUserPendingApplication(userId) {
     try {
       const q = query(
@@ -180,13 +147,6 @@ class AdminApplicationService {
     }
   }
 
-  /**
-   * Approve an admin application
-   * @param {string} applicationId - Application ID
-   * @param {string} reviewerId - ID of admin who approved
-   * @param {string} reviewNotes - Optional review notes
-   * @returns {Promise<void>}
-   */
   async approveApplication(applicationId, reviewerId, reviewNotes = '') {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -198,7 +158,6 @@ class AdminApplicationService {
 
       const applicationData = applicationDoc.data();
 
-      // Update application status
       await updateDoc(applicationRef, {
         status: 'approved',
         reviewedBy: reviewerId,
@@ -207,7 +166,6 @@ class AdminApplicationService {
         updatedAt: serverTimestamp()
       });
 
-      // Update user role to admin
       const userRef = doc(db, 'users', applicationData.userId);
       await updateDoc(userRef, {
         role: 'admin',
@@ -221,13 +179,6 @@ class AdminApplicationService {
     }
   }
 
-  /**
-   * Reject an admin application
-   * @param {string} applicationId - Application ID
-   * @param {string} reviewerId - ID of admin who rejected
-   * @param {string} reviewNotes - Reason for rejection
-   * @returns {Promise<void>}
-   */
   async rejectApplication(applicationId, reviewerId, reviewNotes) {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -237,7 +188,6 @@ class AdminApplicationService {
         throw new Error('Application not found');
       }
 
-      // Update application status
       await updateDoc(applicationRef, {
         status: 'rejected',
         reviewedBy: reviewerId,
@@ -253,50 +203,6 @@ class AdminApplicationService {
     }
   }
 
-  /**
-   * Get a single application by ID
-   * @param {string} applicationId - Application ID
-   * @returns {Promise<Object>} Application data
-   */
-  async getApplicationById(applicationId) {
-    try {
-      const applicationRef = doc(db, this.collectionName, applicationId);
-      const applicationDoc = await getDoc(applicationRef);
-
-      if (!applicationDoc.exists()) {
-        throw new Error('Application not found');
-      }
-
-      return {
-        id: applicationDoc.id,
-        ...applicationDoc.data()
-      };
-    } catch (error) {
-      console.error('Error fetching application:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Delete an application (admin only)
-   * @param {string} applicationId - Application ID
-   * @returns {Promise<void>}
-   */
-  async deleteApplication(applicationId) {
-    try {
-      const applicationRef = doc(db, this.collectionName, applicationId);
-      await deleteDoc(applicationRef);
-      return true;
-    } catch (error) {
-      console.error('Error deleting application:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get application statistics
-   * @returns {Promise<Object>} Statistics object
-   */
   async getApplicationStats() {
     try {
       const allApps = await this.getAllApplications();
