@@ -1,3 +1,4 @@
+import "./login.css";
 import { signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase";
 import { useNavigate } from "react-router-dom";
@@ -39,10 +40,19 @@ export default function Login() {
   };
 
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h1>Campus Food Ordering Platform</h1>
-      <p>Sign in to continue</p>
-      <button onClick={handleLogin}>Sign in with Google</button>
+  <div className="login-container">
+    <div className="login-card">
+      <div style={{ fontSize: "3rem", marginBottom: "10px" }}>🍔</div>
+
+      <h1 className="login-title">Campus Food</h1>
+      <p className="login-subtitle">
+        Sign in to order and manage your meals
+      </p>
+
+      <button className="login-button" onClick={handleLogin}>
+        Sign in with Google
+      </button>
     </div>
-  );
+  </div>
+);
 }
