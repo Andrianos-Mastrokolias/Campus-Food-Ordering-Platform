@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import "./selectRole.css";
+import "./SelectRole.css";
 
 export default function SelectRole() {
   const { user, role, status, setRole, setStatus, loading } = useAuth();
