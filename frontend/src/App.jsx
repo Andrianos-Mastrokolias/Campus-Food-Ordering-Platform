@@ -7,6 +7,8 @@ import Unauthorized from "./pages/unauthorized";
 import ProtectedRoute from "./components/protectedRoute";
 import AdminApplicationForm from "./components/AdminApplication/AdminApplicationForm";
 import AdminReviewDashboard from "./components/AdminApplication/AdminReviewDashboard";
+import VendorRegistrationForm from "./components/VendorRegistration/VendorRegistrationForm";
+import AdminVendorReview from "./components/VendorReview/AdminVendorReview";
 import Layout from "./components/Layout";
 
 export default function App() {
@@ -57,7 +59,25 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminReviewDashboard />
-          </ProtectedRoute>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/register-vendor"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <VendorRegistrationForm />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/vendors"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminVendorReview />
+            </ProtectedRoute>
           }
         />
         

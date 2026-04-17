@@ -33,6 +33,7 @@ export default function Layout({ children }) {
             {role === 'student' && (
               <>
                 <Link to="/home" className="nav-link">Home</Link>
+                <Link to="/register-vendor" className="nav-link">Register as Vendor</Link>
                 <Link to="/apply-admin" className="nav-link">Apply for Admin</Link>
               </>
             )}
@@ -45,7 +46,8 @@ export default function Layout({ children }) {
             {role === 'admin' && (
               <>
                 <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
-                <Link to="/admin/applications" className="nav-link">Review Applications</Link>
+                <Link to="/admin/applications" className="nav-link">Admin Applications</Link>
+                <Link to="/admin/vendors" className="nav-link">Vendor Applications</Link>
               </>
             )}
             <button onClick={handleLogout} className="nav-link logout-btn">
