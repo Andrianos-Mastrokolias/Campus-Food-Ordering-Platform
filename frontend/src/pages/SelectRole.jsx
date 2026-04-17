@@ -1,0 +1,105 @@
+import { doc, updateDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
+import "./selectRole.css";
+
+export default function SelectRole() {
+  const { user, role, status, setRole, setStatus, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return;
+
+    if (role === "student") {
+      navigate("/home");
+    } else if (role === "admin") {
+      navigate("/admin/dashboard");
+    } else if (role === "vendor") {
+      if (status === "approved") {
+        navigate("/vendor/dashboard");
+      } else if (status === "pending" || status === "suspended") {
+        navigate("/unauthorized");
+      }
+    }
+  }, [user, role, status, loading, navigate]);
+
+  const handleSelectRole = async (selectedRole) => {
+    console.log("Button clicked:", selectedRole);
+    console.log("User:", user);
+    console.log("Current role:", role);
+    console.log("Current status:", status);
+
+    if (!user) {
+      console.log("No user found");
+      return;
+    }
+
+    if (role) {
+      console.log("User already has a role, blocking reselection");
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+
+      if (selectedRole === "student") {
+        await updateDoc(userRef, {
+          role: "student",
+          status: null,
+        });
+
+        setRole("student");
+        setStatus(null);
+        navigate("/home");
+      } else if (selectedRole === "vendor") {
+        await updateDoc(userRef, {
+          role: "vendor",
+          status: "pending",
+        });
+
+        setRole("vendor");
+        setStatus("pending");
+        alert("Your vendor account request has been submitted for approval.");
+        navigate("/unauthorized");
+      } else if (selectedRole === "admin") {
+        await updateDoc(userRef, {
+          role: "admin",
+          status: "approved",
+        });
+
+        setRole("admin");
+        setStatus("approved");
+        navigate("/admin/dashboard");
+      }
+    } catch (error) {
+      console.error("Failed to save role:", error);
+      alert("Failed to save role. Check console.");
+    }
+  };
+
+  return (
+    <div className="role-container">
+      <div className="role-card">
+        <h1 className="role-title">Choose Your Role</h1>
+        <p className="role-subtitle">
+          Select how you want to use the platform
+        </p>
+
+        <div className="role-buttons">
+          <button type="button" onClick={() => handleSelectRole("student")}>
+            Student
+          </button>
+          <button type="button" onClick={() => handleSelectRole("vendor")}>
+            Vendor
+          </button>
+          <button type="button" onClick={() => handleSelectRole("admin")}>
+            Admin
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

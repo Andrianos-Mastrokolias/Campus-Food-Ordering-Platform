@@ -24,18 +24,19 @@ export function AuthProvider({ children }) {
 
           if (userSnap.exists()) {
             const userData = userSnap.data();
-            setRole(userData.role || "student");
+            setRole(userData.role || null);
             setStatus(userData.status || null);
           } else {
             await setDoc(userRef, {
               uid: firebaseUser.uid,
               email: firebaseUser.email || "",
               displayName: firebaseUser.displayName || "",
-              role: "student",
+              role: null,
+              status: null,
               createdAt: new Date(),
             });
 
-            setRole("student");
+            setRole(null);
             setStatus(null);
           }
         } else {
@@ -57,7 +58,9 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, status, loading }}>
+    <AuthContext.Provider
+      value={{ user, role, setRole, status, setStatus, loading }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );
