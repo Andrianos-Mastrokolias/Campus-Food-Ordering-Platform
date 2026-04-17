@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/login";
+import SelectRole from "./pages/SelectRole";
 import StudentHome from "./pages/StudentHome";
 import VendorDashboard from "./pages/VendorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -16,6 +17,7 @@ export default function App() {
     <Layout>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/select-role" element={<SelectRole />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
         
         <Route
