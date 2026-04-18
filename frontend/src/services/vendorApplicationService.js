@@ -12,11 +12,20 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase.jsx';
 
+/**
+ * Handles vendor application submission, review, and approval.
+ * This service is responsible for generating a unique shop number
+ * and updating both the application and user records on approval.
+ */
 class VendorApplicationService {
   constructor() {
     this.collectionName = 'vendorApplications';
   }
 
+  /**
+   * Generates a unique shop number for each approved vendor.
+   * The value is based on the current date, userId, and applicationId.
+   */
   generateShopNumber(applicationId, userId) {
     const safeApplicationId = (applicationId || '')
       .replace(/[^a-zA-Z0-9]/g, '')
@@ -33,6 +42,9 @@ class VendorApplicationService {
     return `SHOP-${datePart}-${safeUserId}-${safeApplicationId}`;
   }
 
+  /**
+   * Builds the vendor profile object that is stored on the approved user record.
+   */
   buildVendorProfile(applicationData, shopNumber) {
     return {
       businessName: applicationData.businessName,
@@ -45,6 +57,10 @@ class VendorApplicationService {
     };
   }
 
+  /**
+   * Submits a new vendor application.
+   * Prevents a user from submitting another application while one is still pending.
+   */
   async submitApplication(userId, userEmail, userName, businessData) {
     try {
       const existingApp = await this.getUserPendingApplication(userId);
@@ -80,6 +96,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns only vendor applications that are still waiting for review.
+   */
   async getPendingApplications() {
     try {
       const q = query(
@@ -105,6 +124,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns all vendor applications for admin review.
+   */
   async getAllApplications() {
     try {
       const q = query(
@@ -129,6 +151,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns all applications submitted by a specific user.
+   */
   async getUserApplications(userId) {
     try {
       const q = query(
@@ -154,6 +179,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Checks whether a user already has a pending vendor application.
+   */
   async getUserPendingApplication(userId) {
     try {
       const q = query(
@@ -179,6 +207,15 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Approves a vendor application.
+   * This updates both:
+   * 1. the vendor application record
+   * 2. the user record
+   *
+   * The user only becomes a valid vendor after role, status, and shop number
+   * have all been written successfully.
+   */
   async approveApplication(applicationId, reviewerId, reviewNotes = '') {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -190,10 +227,12 @@ class VendorApplicationService {
 
       const applicationData = applicationDoc.data();
 
+      // Generate a shop number if one has not already been assigned.
       const shopNumber =
         applicationData.shopNumber ||
         this.generateShopNumber(applicationId, applicationData.userId);
 
+      // Update the vendor application with its final approval details.
       await updateDoc(applicationRef, {
         status: 'approved',
         shopNumber,
@@ -203,6 +242,7 @@ class VendorApplicationService {
         updatedAt: serverTimestamp()
       });
 
+      // Update the user so they can access the vendor dashboard.
       const userRef = doc(db, 'users', applicationData.userId);
       await updateDoc(userRef, {
         role: 'vendor',
@@ -219,6 +259,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Rejects a vendor application and stores the reviewer details.
+   */
   async rejectApplication(applicationId, reviewerId, reviewNotes) {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -243,6 +286,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns simple summary stats for the admin dashboard cards and filters.
+   */
   async getApplicationStats() {
     try {
       const allApps = await this.getAllApplications();

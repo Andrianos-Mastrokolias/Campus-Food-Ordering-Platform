@@ -35,6 +35,7 @@ export default function SelectRole() {
       return;
     }
 
+    // Prevent users from choosing another role once one has already been assigned.
     if (role) {
       return;
     }
@@ -52,6 +53,7 @@ export default function SelectRole() {
         setStatus(null);
         navigate("/home");
       } else if (selectedRole === "vendor") {
+        // Keep the user as a student until they complete the vendor application flow.
         await updateDoc(userRef, {
           role: "student",
           status: null,
@@ -61,6 +63,7 @@ export default function SelectRole() {
         setStatus(null);
         navigate("/register-vendor");
       } else if (selectedRole === "admin") {
+        // Admin access cannot be self-assigned and must go through the application process.
         alert("Admin access must be requested through the Admin Application form.");
         navigate("/login");
       }
