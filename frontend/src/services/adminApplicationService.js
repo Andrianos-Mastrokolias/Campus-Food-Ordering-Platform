@@ -13,11 +13,19 @@ import {
 
 import { db } from "../firebase";
 
+/**
+ * Handles admin access applications and the admin approval workflow.
+ * Approved users are promoted to the admin role and marked as approved.
+ */
 class AdminApplicationService {
   constructor() {
     this.collectionName = 'adminApplications';
   }
 
+  /**
+   * Submits a new admin access request.
+   * Prevents duplicate pending requests for the same user.
+   */
   async submitApplication(userId, userEmail, userName, currentRole, reason) {
     try {
       const existingApp = await this.getUserPendingApplication(userId);
@@ -48,6 +56,9 @@ class AdminApplicationService {
     }
   }
 
+  /**
+   * Returns all pending admin applications for review.
+   */
   async getPendingApplications() {
     try {
       const q = query(
@@ -73,6 +84,9 @@ class AdminApplicationService {
     }
   }
 
+  /**
+   * Returns all admin applications.
+   */
   async getAllApplications() {
     try {
       const q = query(
@@ -97,6 +111,9 @@ class AdminApplicationService {
     }
   }
 
+  /**
+   * Returns all admin applications submitted by a specific user.
+   */
   async getUserApplications(userId) {
     try {
       const q = query(
@@ -122,6 +139,9 @@ class AdminApplicationService {
     }
   }
 
+  /**
+   * Checks whether the user already has a pending admin request.
+   */
   async getUserPendingApplication(userId) {
     try {
       const q = query(
@@ -147,6 +167,11 @@ class AdminApplicationService {
     }
   }
 
+  /**
+   * Approves an admin application.
+   * The user is granted the admin role and marked as approved,
+   * which allows access to protected admin pages.
+   */
   async approveApplication(applicationId, reviewerId, reviewNotes = '') {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -158,6 +183,7 @@ class AdminApplicationService {
 
       const applicationData = applicationDoc.data();
 
+      // Update the application status and review details.
       await updateDoc(applicationRef, {
         status: 'approved',
         reviewedBy: reviewerId,
@@ -166,6 +192,7 @@ class AdminApplicationService {
         updatedAt: serverTimestamp()
       });
 
+      // Promote the user to an approved admin.
       const userRef = doc(db, 'users', applicationData.userId);
       await updateDoc(userRef, {
         role: 'admin',
@@ -180,6 +207,9 @@ class AdminApplicationService {
     }
   }
 
+  /**
+   * Rejects an admin application and stores the review outcome.
+   */
   async rejectApplication(applicationId, reviewerId, reviewNotes) {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -204,6 +234,9 @@ class AdminApplicationService {
     }
   }
 
+  /**
+   * Returns summary counts used in the admin applications page.
+   */
   async getApplicationStats() {
     try {
       const allApps = await this.getAllApplications();

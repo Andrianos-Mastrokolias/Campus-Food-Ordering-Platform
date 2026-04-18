@@ -6,6 +6,7 @@ export default function Unauthorized() {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
+    // Send approved users back to the correct dashboard for their role.
     if (role === "admin" && status === "approved") {
       navigate("/admin/applications");
     } else if (role === "vendor" && status === "approved") {

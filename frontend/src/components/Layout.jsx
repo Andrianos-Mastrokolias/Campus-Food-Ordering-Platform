@@ -21,7 +21,10 @@ export default function Layout({ children }) {
     return <>{children}</>;
   }
 
+  // Show the vendor dashboard only after the vendor has been approved.
   const isApprovedVendor = role === 'vendor' && status === 'approved';
+
+  // Show admin review pages only after the admin request has been approved.
   const isApprovedAdmin = role === 'admin' && status === 'approved';
 
   return (

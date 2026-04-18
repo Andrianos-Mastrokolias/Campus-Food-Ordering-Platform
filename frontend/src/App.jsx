@@ -37,6 +37,7 @@ export default function App() {
           }
         />
 
+        {/* Redirect the old admin dashboard route to the active admin applications page. */}
         <Route
           path="/admin/dashboard"
           element={<Navigate to="/admin/applications" replace />}
