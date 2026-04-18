@@ -8,24 +8,9 @@ import "../App.css";
 export default function VendorDashboard() {
   const { user, role, loading } = useAuth();
 
-  const [menuItems, setMenuItems] = useState([
-    {
-      id: 1,
-      name: "Chicken Burger",
-      description: "Grilled chicken burger with chips",
-      price: "R65.00",
-      photoUrl: "",
-      available: true,
-    },
-    {
-      id: 2,
-      name: "Veg Wrap",
-      description: "Fresh veggie wrap with hummus",
-      price: "R55.00",
-      photoUrl: "",
-      available: false,
-    },
-  ]);
+  const [menuItems, setMenuItems] = useState([]);
+  // Stores all orders that belong to the currently logged-in vendor
+  const [vendorOrders, setVendorOrders] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -59,6 +44,43 @@ export default function VendorDashboard() {
 
     fetchMenuItems();
   }, [user, role, loading]);
+
+    // Fetch all orders that belong to the logged-in vendor.
+  // This supports User Story 2: vendor needs to see all orders.
+  useEffect(() => {
+    const fetchVendorOrders = async () => {
+      // Wait until auth is finished loading and make sure a vendor is logged in
+      if (loading || !user || role !== "vendor") return;
+
+      try {
+        // Reference the orders collection in Firestore
+        const ordersRef = collection(db, "orders");
+
+        // Query only the orders that belong to this vendor
+        // orderBy is removed for now to avoid Firestore index issues during development
+        const q = query(
+          ordersRef,
+          where("vendorId", "==", user.uid)
+        );
+
+        const querySnapshot = await getDocs(q);
+
+        // Convert Firestore documents into normal JavaScript objects
+        const orders = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Save the vendor's orders into state so they can be displayed
+        setVendorOrders(orders);
+      } catch (error) {
+        console.error("Error fetching vendor orders:", error.message);
+      }
+    };
+
+    fetchVendorOrders();
+  }, [user, role, loading]);
+
 
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -313,6 +335,37 @@ export default function VendorDashboard() {
               </div>
             ))}
           </div>
+        </section>
+        <section className="menu-section">
+          <h2>Incoming Orders</h2>
+
+          {vendorOrders.length === 0 ? (
+            <p>No orders yet.</p>
+          ) : (
+            <div className="menu-list">
+              {vendorOrders.map((order) => (
+                <div className="menu-card" key={order.id}>
+                  {/* Show order summary information */}
+                  <h3>Order #{order.id.slice(0, 6)}</h3>
+                  <p><strong>Student ID:</strong> {order.studentId}</p>
+                  <p><strong>Status:</strong> {order.status}</p>
+                  <p><strong>Total:</strong> R{order.total.toFixed(2)}</p>
+
+                  {/* Show each item inside the order */}
+                  <div style={{ marginTop: "1rem", textAlign: "left" }}>
+                    <strong>Items:</strong>
+                    {order.items.map((item, index) => (
+                      <div key={index} style={{ marginTop: "0.5rem" }}>
+                        <p>
+                          {item.name} - {item.price} x {item.quantity}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 

@@ -1,13 +1,15 @@
 import LogoutButton from "../components/LogoutButton";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react"; // useEffect fetches live menu items when the page loads
-import { collection, getDocs } from "firebase/firestore"; // Firestore functions for reading menu items
+import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore"; // Firestore functions for reading menu items
 import { db } from "../firebase"; // shared Firestore database connection
 import { Link } from "react-router-dom";
 import "./StudentHome.css";
 
 export default function StudentHome() {
   const { cart, addToCart, clearCart, removeFromCart } = useCart();
+  const { user } = useAuth();
 
   // Stores all menu items fetched from Firestore
   const [menuItems, setMenuItems] = useState([]);
@@ -48,16 +50,69 @@ export default function StudentHome() {
     0
   );
 
-  // Simulate checkout for now
-  const handleCheckout = () => {
+  // Save real orders to Firestore when the student checks out.
+  // Because the cart may contain items from different vendors,
+  // we create one order document per vendor.
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
 
-    setOrderPlaced(true);
-    clearCart();
+    if (!user) {
+      alert("You must be logged in to place an order.");
+      return;
+    }
 
-    setTimeout(() => {
-      setOrderPlaced(false);
-    }, 3000);
+    try {
+      // Group cart items by vendor so each vendor gets a separate order
+      const ordersByVendor = {};
+
+      cart.forEach((item) => {
+        const vendorId = item.vendor;
+
+        if (!ordersByVendor[vendorId]) {
+          ordersByVendor[vendorId] = [];
+        }
+
+        ordersByVendor[vendorId].push({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+          photoUrl: item.photoUrl || "",
+          available: item.available,
+        });
+      });
+
+      // Create one Firestore order document per vendor
+      for (const vendorId in ordersByVendor) {
+        const vendorItems = ordersByVendor[vendorId];
+
+        const orderTotal = vendorItems.reduce(
+          (sum, item) => sum + Number(String(item.price).replace("R", "")),
+          0
+        );
+
+        const orderData = {
+          vendorId,
+          studentId: user.uid,
+          items: vendorItems,
+          total: orderTotal,
+          status: "pending",
+          createdAt: serverTimestamp(),
+        };
+
+        await addDoc(collection(db, "orders"), orderData);
+      }
+
+      setOrderPlaced(true);
+      clearCart();
+
+      setTimeout(() => {
+        setOrderPlaced(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error placing order:", error.message);
+      alert("There was a problem placing your order.");
+    }
   };
 
   // Show loading message while Firestore data is being fetched
