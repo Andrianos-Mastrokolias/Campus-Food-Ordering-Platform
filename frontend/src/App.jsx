@@ -1,9 +1,8 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/login";
 import SelectRole from "./pages/SelectRole";
 import StudentHome from "./pages/StudentHome";
 import VendorDashboard from "./pages/VendorDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
 import Unauthorized from "./pages/unauthorized";
 import ProtectedRoute from "./components/protectedRoute";
 import AdminApplicationForm from "./components/AdminApplication/AdminApplicationForm";
@@ -19,7 +18,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/select-role" element={<SelectRole />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        
+
         <Route
           path="/home"
           element={
@@ -28,7 +27,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/vendor/dashboard"
           element={
@@ -37,14 +36,10 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/admin/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/admin/applications" replace />}
         />
 
         <Route
@@ -82,7 +77,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route path="*" element={<Login />} />
       </Routes>
     </Layout>
