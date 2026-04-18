@@ -10,29 +10,32 @@ import {
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
+import { db } from '../firebase.jsx';
 
-import { db } from "../firebase";
-
-class AdminApplicationService {
+class VendorApplicationService {
   
   constructor() {
-    this.collectionName = 'adminApplications';
+    this.collectionName = 'vendorApplications';
   }
 
-  async submitApplication(userId, userEmail, userName, currentRole, reason) {
+  async submitApplication(userId, userEmail, userName, businessData) {
     try {
       const existingApp = await this.getUserPendingApplication(userId);
       
       if (existingApp) {
-        throw new Error('You already have a pending application');
+        throw new Error('You already have a pending vendor application');
       }
 
       const applicationData = {
         userId,
         userEmail,
         userName,
-        currentRole,
-        reason,
+        businessName: businessData.businessName,
+        businessDescription: businessData.businessDescription,
+        businessPhone: businessData.businessPhone,
+        businessAddress: businessData.businessAddress,
+        businessType: businessData.businessType,
+        documents: [],
         status: 'pending',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -44,7 +47,7 @@ class AdminApplicationService {
       const docRef = await addDoc(collection(db, this.collectionName), applicationData);
       return docRef.id;
     } catch (error) {
-      console.error('Error submitting application:', error);
+      console.error('Error submitting vendor application:', error);
       throw error;
     }
   }
@@ -169,13 +172,21 @@ class AdminApplicationService {
 
       const userRef = doc(db, 'users', applicationData.userId);
       await updateDoc(userRef, {
-        role: 'admin',
+        role: 'vendor',
+        vendorProfile: {
+          businessName: applicationData.businessName,
+          businessDescription: applicationData.businessDescription,
+          businessPhone: applicationData.businessPhone,
+          businessAddress: applicationData.businessAddress,
+          businessType: applicationData.businessType,
+          verifiedAt: serverTimestamp()
+        },
         updatedAt: serverTimestamp()
       });
 
       return true;
     } catch (error) {
-      console.error('Error approving application:', error);
+      console.error('Error approving vendor application:', error);
       throw error;
     }
   }
@@ -199,7 +210,7 @@ class AdminApplicationService {
 
       return true;
     } catch (error) {
-      console.error('Error rejecting application:', error);
+      console.error('Error rejecting vendor application:', error);
       throw error;
     }
   }
@@ -223,4 +234,4 @@ class AdminApplicationService {
   }
 }
 
-export default new AdminApplicationService();
+export default new VendorApplicationService();
