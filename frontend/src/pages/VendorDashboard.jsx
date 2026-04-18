@@ -17,6 +17,7 @@ export default function VendorDashboard() {
     description: "",
     price: "",
     photoUrl: "",
+    stock: 1, // stores how many units of the item are available
     available: true,
   });
 
@@ -87,7 +88,12 @@ export default function VendorDashboard() {
 
     setFormData((previousFormData) => ({
       ...previousFormData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "number"
+          ? Number(value)
+          : value,
     }));
   };
 
@@ -112,6 +118,11 @@ export default function VendorDashboard() {
       alert("Please enter a price.");
       return;
     }
+
+    if (formData.stock < 0) {
+      alert("Stock cannot be negative.");
+      return;
+    }
   
     if (editingItemId !== null) {
       const updatedMenuItem = {
@@ -119,7 +130,8 @@ export default function VendorDashboard() {
         description: trimmedDescription,
         price: trimmedPrice,
         photoUrl: formData.photoUrl,
-        available: formData.available,
+        stock: formData.stock, // saves the stock quantity when editing
+        available: formData.stock > 0, // item is only available if stock is above 0
       };
   
       try {
@@ -146,7 +158,8 @@ export default function VendorDashboard() {
         description: trimmedDescription,
         price: trimmedPrice,
         photoUrl: formData.photoUrl,
-        available: formData.available,
+        stock: formData.stock, // saves the stock quantity for new items
+        available: formData.stock > 0, // automatically marks item sold out if stock is 0
       };
   
       addDoc(collection(db, "menuItems"), newMenuItem)
@@ -166,30 +179,41 @@ export default function VendorDashboard() {
       description: "",
       price: "",
       photoUrl: "",
+      stock: 1, // reset stock back to default after submit
       available: true,
     });
   };
 
+  // Toggle stock-based availability.
+  // If stock is above 0, clicking the button sets stock to 0 and marks the item sold out.
+  // If stock is 0, clicking the button restores stock to 1 and marks the item available again.
   const toggleAvailability = async (id) => {
     const selectedItem = menuItems.find((item) => item.id === id);
-  
+
     if (!selectedItem) return;
-  
-    const newAvailability = !selectedItem.available;
-  
+
+    // If item currently has stock, make it sold out by setting stock to 0.
+    // If item is sold out, restore it with stock 1.
+    const newStock = (selectedItem.stock ?? 0) > 0 ? 0 : 1;
+    const newAvailability = newStock > 0;
+
     try {
       const itemRef = doc(db, "menuItems", id);
+
       await updateDoc(itemRef, {
+        stock: newStock,
         available: newAvailability,
       });
-  
+
       setMenuItems((previousMenuItems) =>
         previousMenuItems.map((item) =>
-          item.id === id ? { ...item, available: newAvailability } : item
+          item.id === id
+            ? { ...item, stock: newStock, available: newAvailability }
+            : item
         )
       );
     } catch (error) {
-      console.error("Error updating availability:", error.message);
+      console.error("Error updating stock availability:", error.message);
     }
   };
 
@@ -199,6 +223,7 @@ export default function VendorDashboard() {
       description: item.description,
       price: item.price,
       photoUrl: item.photoUrl,
+      stock: item.stock ?? 1,
       available: item.available,
     });
 
@@ -213,6 +238,7 @@ export default function VendorDashboard() {
       description: "",
       price: "",
       photoUrl: "",
+      stock: 1, // reset stock when leaving edit mode
       available: true,
     });
   };
@@ -254,6 +280,15 @@ export default function VendorDashboard() {
               placeholder="Price e.g. R65.00"
               value={formData.price}
               onChange={handleInputChange}
+            />
+
+            <input
+              type="number"
+              name="stock"
+              placeholder="Stock quantity"
+              value={formData.stock}
+              onChange={handleInputChange}
+              min="0"
             />
 
             <input
@@ -311,8 +346,9 @@ export default function VendorDashboard() {
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
                 <p className="price">{item.price}</p>
-                <p className={item.available ? "status available" : "status sold-out"}>
-                  {item.available ? "Available" : "Sold Out"}
+                <p><strong>Stock:</strong> {item.stock ?? 0}</p>
+                <p className={(item.stock ?? 0) > 0 ? "status available" : "status sold-out"}>
+                  {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
                 </p>
 
                 <div className="button-row">
@@ -329,7 +365,7 @@ export default function VendorDashboard() {
                     type="button"
                     onClick={() => toggleAvailability(item.id)}
                   >
-                    {item.available ? "Mark as Sold Out" : "Mark as Available"}
+                    {(item.stock ?? 0) > 0 ? "Mark as Sold Out" : "Mark as Available"}
                   </button>
                 </div>
               </div>
