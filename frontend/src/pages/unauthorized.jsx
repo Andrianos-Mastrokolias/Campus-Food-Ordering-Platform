@@ -2,16 +2,18 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Unauthorized() {
-  const { role } = useAuth();
+  const { role, status } = useAuth();
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    if (role === "admin") {
-      navigate("/admin/dashboard");
-    } else if (role === "vendor") {
+    if (role === "admin" && status === "approved") {
+      navigate("/admin/applications");
+    } else if (role === "vendor" && status === "approved") {
       navigate("/vendor/dashboard");
-    } else {
+    } else if (role === "student") {
       navigate("/home");
+    } else {
+      navigate("/select-role");
     }
   };
 

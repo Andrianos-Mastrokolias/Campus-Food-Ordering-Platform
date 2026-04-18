@@ -1,20 +1,19 @@
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
   orderBy,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore';
 
 import { db } from "../firebase";
 
 class AdminApplicationService {
-  
   constructor() {
     this.collectionName = 'adminApplications';
   }
@@ -22,7 +21,7 @@ class AdminApplicationService {
   async submitApplication(userId, userEmail, userName, currentRole, reason) {
     try {
       const existingApp = await this.getUserPendingApplication(userId);
-      
+
       if (existingApp) {
         throw new Error('You already have a pending application');
       }
@@ -60,10 +59,10 @@ class AdminApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((docSnapshot) => {
         applications.push({
-          id: doc.id,
-          ...doc.data()
+          id: docSnapshot.id,
+          ...docSnapshot.data()
         });
       });
 
@@ -84,10 +83,10 @@ class AdminApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((docSnapshot) => {
         applications.push({
-          id: doc.id,
-          ...doc.data()
+          id: docSnapshot.id,
+          ...docSnapshot.data()
         });
       });
 
@@ -109,10 +108,10 @@ class AdminApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((docSnapshot) => {
         applications.push({
-          id: doc.id,
-          ...doc.data()
+          id: docSnapshot.id,
+          ...docSnapshot.data()
         });
       });
 
@@ -132,15 +131,15 @@ class AdminApplicationService {
       );
 
       const querySnapshot = await getDocs(q);
-      
+
       if (querySnapshot.empty) {
         return null;
       }
 
-      const doc = querySnapshot.docs[0];
+      const firstApplication = querySnapshot.docs[0];
       return {
-        id: doc.id,
-        ...doc.data()
+        id: firstApplication.id,
+        ...firstApplication.data()
       };
     } catch (error) {
       console.error('Error checking pending application:', error);
@@ -170,6 +169,7 @@ class AdminApplicationService {
       const userRef = doc(db, 'users', applicationData.userId);
       await updateDoc(userRef, {
         role: 'admin',
+        status: 'approved',
         updatedAt: serverTimestamp()
       });
 
@@ -207,15 +207,13 @@ class AdminApplicationService {
   async getApplicationStats() {
     try {
       const allApps = await this.getAllApplications();
-      
-      const stats = {
+
+      return {
         total: allApps.length,
         pending: allApps.filter(app => app.status === 'pending').length,
         approved: allApps.filter(app => app.status === 'approved').length,
         rejected: allApps.filter(app => app.status === 'rejected').length
       };
-
-      return stats;
     } catch (error) {
       console.error('Error fetching statistics:', error);
       throw error;
