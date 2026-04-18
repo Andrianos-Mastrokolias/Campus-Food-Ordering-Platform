@@ -136,7 +136,7 @@ export default function StudentHome() {
       </div>
 
       <section className="menu-section">
-        <h2>🍔 Available Menu</h2>
+        <h2>Menu</h2>
 
         {menuItems.length === 0 ? (
           <p>No menu items available yet.</p>
@@ -197,17 +197,18 @@ export default function StudentHome() {
                 <p>
                   <strong>{item.price}</strong>
                 </p>
+                <p><strong>Stock:</strong> {item.stock ?? 0}</p>
 
-                <p style={{ fontWeight: "bold", color: item.available ? "green" : "red" }}>
-                  {item.available ? "Available" : "Sold Out"}
+                <p style={{ fontWeight: "bold", color: (item.stock ?? 0) > 0 ? "green" : "red" }}>
+                  {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
                 </p>
 
                 <button
                   onClick={() => addToCart(item, item.vendorId)}
-                  disabled={!item.available}
+                  disabled={(item.stock ?? 0) === 0}
                   className="add-btn"
                 >
-                  {item.available ? "Add to Cart" : "Unavailable"}
+                  {(item.stock ?? 0) > 0 ? "Add to Cart" : "Unavailable"}
                 </button>
               </div>
             ))}
