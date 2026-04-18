@@ -10,7 +10,8 @@ import {
   orderBy,
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from '../firebase.jsx';
+
+import { db } from "../firebase";
 
 class AdminApplicationService {
   
