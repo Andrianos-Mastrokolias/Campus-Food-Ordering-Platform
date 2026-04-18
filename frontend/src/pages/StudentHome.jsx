@@ -6,11 +6,12 @@ import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore
 import { db } from "../firebase"; // shared Firestore database connection
 import { Link } from "react-router-dom";
 import "./StudentHome.css";
+import { useNavigate } from "react-router-dom";   
 
 export default function StudentHome() {
   const { cart, addToCart, clearCart, removeFromCart } = useCart();
   const { user } = useAuth();
-
+  const navigate = useNavigate();
   // Stores all menu items fetched from Firestore
   const [menuItems, setMenuItems] = useState([]);
 
@@ -19,6 +20,11 @@ export default function StudentHome() {
 
   // Controls the temporary checkout success message
   const [orderPlaced, setOrderPlaced] = useState(false);
+
+  
+
+  console.log("orderPlaced state:", orderPlaced);
+  console.log("RENDER orderPlaced =", orderPlaced);
 
   // Fetch all menu items from Firestore when the student page loads
   // This links the student page to the same live menu data that vendors manage
@@ -50,75 +56,89 @@ export default function StudentHome() {
     0
   );
 
-  // Save real orders to Firestore when the student checks out.
-  // Because the cart may contain items from different vendors,
-  // we create one order document per vendor.
-  const handleCheckout = async () => {
-    if (cart.length === 0) return;
+ // Handles placing an order when student clicks "Checkout"
+// This function writes orders to Firestore and then redirects user to tracking page
 
-    if (!user) {
-      alert("You must be logged in to place an order.");
-      return;
-    }
+const handleCheckout = async () => {
+  if (cart.length === 0) return;
 
-    try {
-      // Group cart items by vendor so each vendor gets a separate order
-      const ordersByVendor = {};
+  // Ensure user is logged in before allowing order placement
+  if (!user) {
+    alert("You must be logged in to place an order.");
+    return;
+  }
 
-      cart.forEach((item) => {
-        const vendorId = item.vendor;
+  try {
+    // -----------------------------
+    // STEP 1: GROUP ITEMS BY VENDOR
+    // -----------------------------
+    // Each vendor gets its own order document
+    const ordersByVendor = {};
 
-        if (!ordersByVendor[vendorId]) {
-          ordersByVendor[vendorId] = [];
-        }
+    cart.forEach((item) => {
+      const vendorId = item.vendor;
 
-        ordersByVendor[vendorId].push({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: 1,
-          photoUrl: item.photoUrl || "",
-          available: item.available,
-        });
-      });
-
-      // Create one Firestore order document per vendor
-      for (const vendorId in ordersByVendor) {
-        const vendorItems = ordersByVendor[vendorId];
-
-        const orderTotal = vendorItems.reduce(
-          (sum, item) => sum + Number(String(item.price).replace("R", "")),
-          0
-        );
-
-        const orderData = {
-          vendorId,
-          studentId: user.uid,
-          items: vendorItems,
-          total: orderTotal,
-          status: "pending",
-          createdAt: serverTimestamp(),
-        };
-
-        await addDoc(collection(db, "orders"), orderData);
+      // If vendor doesn't exist in object yet, create it
+      if (!ordersByVendor[vendorId]) {
+        ordersByVendor[vendorId] = [];
       }
 
-      setOrderPlaced(true);
-      clearCart();
+      // Push item into correct vendor group
+      ordersByVendor[vendorId].push({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+      });
+    });
 
-      setTimeout(() => {
-        setOrderPlaced(false);
-      }, 3000);
-    } catch (error) {
-      console.error("Error placing order:", error.message);
-      alert("There was a problem placing your order.");
+    // -----------------------------------
+    // STEP 2: WRITE ORDERS TO FIRESTORE
+    // -----------------------------------
+    for (const vendorId in ordersByVendor) {
+      const vendorItems = ordersByVendor[vendorId];
+
+      const orderTotal = vendorItems.reduce((sum, item) => {
+        return sum + Number(String(item.price).replace("R", ""));
+      }, 0);
+
+      const orderData = {
+        vendorId,                 // which vendor receives this order
+        studentId: user.uid,      // who placed the order
+        items: vendorItems,       // list of items
+        total: orderTotal,        // total price
+        status: "pending",       // initial order status
+        createdAt: serverTimestamp(), // timestamp for sorting/tracking
+      };
+
+      // Save order in Firestore
+      await addDoc(collection(db, "orders"), orderData);
     }
-  };
 
-  // Show loading message while Firestore data is being fetched
-  if (loading) {
-    return <p style={{ textAlign: "center", marginTop: "40px" }}>Loading menu...</p>;
+    // -----------------------------
+    // STEP 3: CLEAN UP CART
+    // -----------------------------
+    clearCart();
+
+    /*
+  We show a success message instead of redirecting.
+  This keeps the user on the menu so they can keep browsing.
+*/
+    setOrderPlaced(true);
+
+    /*
+      auto-hide message after a few seconds
+      (so UI doesn’t stay cluttered forever)
+    */
+    setTimeout(() => {
+      setOrderPlaced(false);
+    }, 6000);
+
+  } catch (error) {
+    console.error("Error placing order:", error.message);
+    alert("Something went wrong while placing your order.");
   }
+};
 
   return (
     <div className="student-home">
@@ -126,6 +146,23 @@ export default function StudentHome() {
         <h1>Student Dashboard</h1>
         <p className="subtitle">Browse food items currently available on the platform.</p>
       </div>
+
+      {orderPlaced && (
+        <div className="success-message">
+
+          {/* Confirmation message after successful checkout */}
+          <p>✅ Your order has been placed successfully!</p>
+
+          {/* Next action (do NOT force redirect rather provide a link t
+          so that they can view their order status and still browse) */}
+          <div style={{ marginTop: "10px" }}>
+            <Link to="/orders" className="track-btn">
+              Track your order →
+            </Link>
+          </div>
+
+        </div>
+      )}
 
       <div className="admin-apply-card">
         <h2>Apply for Admin Role</h2>
@@ -263,14 +300,28 @@ export default function StudentHome() {
               </div>
             </div>
 
-            {orderPlaced && (
-              <div className="success-message">
-                ✅ Your order has been placed successfully!
-              </div>
-            )}
+              {orderPlaced && (
+                <div style={{
+                  position: "fixed",
+                  top: "20px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  background: "green",
+                  color: "white",
+                  padding: "20px",
+                  zIndex: 99999,
+                  fontSize: "20px"
+                }}>
+                  ORDER SUCCESS TEST 🔥
+                </div>
+              )}
           </>
         )}
       </section>
+
+      
+
+      
 
       <LogoutButton />
     </div>
