@@ -121,8 +121,8 @@ if (loading) {
               ) : (
                 <div
                   style={{
-                    width: "60%",
-                    height: "250px",
+                    width: "45%",
+                    height: "180px",
                     borderRadius: "10px",
                     margin: "0 auto 16px",
                     background: "#f1f1f1",
