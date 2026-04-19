@@ -13,8 +13,8 @@ When I log in with google
 Then I should be logged into the platform and redirected according to my role
 
 ### UAT 3
-Given I am logged in as a user with a specific role
-When I attempt to access a page that is not permitted for my role
+Given I am logged in as a user with a specific role, such as student
+When I attempt to access a page that is not permitted for my role, such as vendor
 Then I should be redirected to the unauthorized page
 
 ---
@@ -249,26 +249,22 @@ Then I should be denied access
 
 ---
 
-## 6. Orders linked to correct vendor
+## 6. users linked to the correct role
 
-### AT6.1 – Link order to vendor
-**Given** a student places an order  
-**When** the order is saved  
-**Then** it is linked to the correct vendor  
+### AT6.1 – student
+**Given** I am a new authenticated user without a role
+**When** i select student
+**Then** my role should be saved as a student, and I should be redirected to the student homepage 
 
-### AT6.2 – Vendor sees correct orders
-**Given** an order exists  
-**When** the vendor views their orders  
-**Then** only their orders are shown  
+### AT6.2 – vendor
+**Given** I am a new authenticated user without a role
+**When** i select vendor
+**Then** I should be temporarily assigned a role that allows access to the vendor registration page, and I should be required to complete the vendor registration process, and I should require admin approval before accessing vendor features
 
-### AT6.3 – Student sees correct vendor
-**Given** a student views an order  
-**When** the order is displayed  
-**Then** it shows the correct vendor and status  
+### AT6.3 – Admin
+**Given** I am a new authenticated user without a role
+**When** i select admin 
+**Then** I should be temporarily assigned a role that allows access to the admin application page, and I should be able to submit an admin application, and I should require approval before accessing admin features
 
-### AT6.4 – Maintain correct association
-**Given** multiple vendors exist  
-**When** orders are processed  
-**Then** each order remains linked to the correct vendor  
 
 ---
