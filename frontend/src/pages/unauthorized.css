@@ -1,0 +1,56 @@
+.unauth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(
+    135deg,
+    #3b82f6 0%,
+    #6366f1 50%,
+    #8b5cf6 100%
+  );
+  padding: 20px;
+}
+
+.unauth-card {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.unauth-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.unauth-title {
+  font-size: 1.8rem;
+  color: #dc2626;
+  margin-bottom: 10px;
+}
+
+.unauth-text {
+  color: #6b7280;
+  margin-bottom: 25px;
+}
+
+.unauth-button {
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.unauth-button:hover {
+  background-color: #4f46e5;
+  transform: translateY(-2px);
+}

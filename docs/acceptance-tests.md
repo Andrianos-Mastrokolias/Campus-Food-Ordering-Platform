@@ -1,4 +1,5 @@
 # Acceptance Tests
+# Sprint 1
 ## User Story 1: Third-Party Login
 
 ### UAT 1
@@ -12,8 +13,8 @@ When I log in with google
 Then I should be logged into the platform and redirected according to my role
 
 ### UAT 3
-Given I am logged in as a user with a specific role
-When I attempt to access a page that is not permitted for my role
+Given I am logged in as a user with a specific role, such as student
+When I attempt to access a page that is not permitted for my role, such as vendor
 Then I should be redirected to the unauthorized page
 
 ---
@@ -90,3 +91,180 @@ Then the vendor's status should change to suspended
 Given I am not an admin
 When I try to access vendor approval or suspension actions
 Then I should be denied access
+
+# Sprint 2
+
+
+## 1. Student tracks order status
+
+### AT1.1 – View order status
+**Given** a student has placed an order  
+**When** the student views their orders  
+**Then** the system displays the current order status  
+
+### AT1.2 – Initial order status
+**Given** an order has just been placed  
+**When** the student checks the order  
+**Then** the status is **Pending**  
+
+### AT1.3 – Order in preparation
+**Given** the vendor has started preparing the order  
+**When** the status is updated  
+**Then** the student sees **Being Prepared**  
+
+### AT1.4 – Order ready
+**Given** the order is finished  
+**When** the vendor marks it as ready  
+**Then** the student sees **Ready**  
+
+### AT1.5 – Order completed
+**Given** the order has been collected  
+**When** the status is updated  
+**Then** the student sees **Completed**  
+
+---
+
+## 2. Vendor views and manages orders
+
+### AT2.1 – View vendor orders
+**Given** a vendor is logged in  
+**When** the vendor views the orders page  
+**Then** all orders for their shop are displayed  
+
+### AT2.2 – Order details visible
+**Given** orders exist  
+**When** the vendor views them  
+**Then** order details (items, user, status) are shown  
+
+### AT2.3 – Update order status
+**Given** a vendor selects an order  
+**When** the vendor updates the status  
+**Then** the system saves the updated status  
+
+### AT2.4 – Vendor isolation
+**Given** multiple vendors exist  
+**When** a vendor views orders  
+**Then** only their own shop’s orders are shown  
+
+---
+
+## 3. Menu items show as sold out
+
+### AT3.1 – Item available
+**Given** an item has stock > 0  
+**When** students view the menu  
+**Then** the item is available  
+
+### AT3.2 – Item sold out
+**Given** an item’s stock reaches 0  
+**When** the menu updates  
+**Then** the item is marked **Sold Out**  
+
+### AT3.3 – Prevent ordering sold-out items
+**Given** an item is sold out  
+**When** a student attempts to order it  
+**Then** the system blocks the order  
+
+### AT3.4 – Restock item
+**Given** stock is increased above 0  
+**When** the menu updates  
+**Then** the item becomes available again  
+
+---
+
+## 4. Vendor registration and verification
+
+### AT4.1 – Submit vendor application
+**Given** a user wants to become a vendor  
+**When** they submit the registration form  
+**Then** a vendor application is created  
+
+### AT4.2 – Application status pending
+**Given** a vendor application is submitted  
+**When** it is stored  
+**Then** its status is **Pending**  
+
+### AT4.3 – Restrict access before approval
+**Given** a vendor is not approved  
+**When** they try to access the vendor dashboard  
+**Then** access is denied  
+
+### AT4.4 – Allow access after approval
+**Given** a vendor is approved  
+**When** they log in  
+**Then** they can access the vendor dashboard  
+
+### AT4.5 – Prevent duplicate applications
+**Given** a user already has a pending request  
+**When** they submit another application  
+**Then** the system rejects it  
+
+---
+
+## 5A. Admin reviews vendor applications
+
+### AT5A.1 – View applications
+**Given** an admin is logged in  
+**When** they open vendor applications  
+**Then** all applications are displayed  
+
+### AT5A.2 – View vendor details
+**Given** an application exists  
+**When** the admin selects it  
+**Then** full shop details are shown  
+
+### AT5A.3 – Verify business information
+**Given** the admin is reviewing an application  
+**When** viewing details  
+**Then** business name, description, phone, and address are visible  
+
+### AT5A.4 – Approve or reject
+**Given** the admin reviews an application  
+**When** they make a decision  
+**Then** the system saves the result  
+
+---
+
+## 5B. Shop number generation
+
+### AT5B.1 – Generate shop number
+**Given** a vendor application is approved  
+**When** approval occurs  
+**Then** a unique shop number is generated  
+
+### AT5B.2 – Store shop number in application
+**Given** a vendor is approved  
+**When** the system updates the record  
+**Then** the shop number is saved in the application  
+
+### AT5B.3 – Store shop number in user profile
+**Given** a vendor is approved  
+**When** the user record is updated  
+**Then** the shop number is stored in the vendor profile  
+
+### AT5B.4 – Ensure uniqueness
+**Given** multiple vendors are approved  
+**When** shop numbers are generated  
+**Then** each shop number is unique  
+
+---
+
+## 6. users linked to the correct role
+
+### AT6.1 – student
+**Given** I am a new authenticated user without a role
+**When** i select student
+**Then** my role should be saved as a student, and I should be redirected to the student homepage 
+
+### AT6.2 – vendor
+**Given** I am a new authenticated user without a role
+**When** i select vendor
+**Then** I should be temporarily assigned a role that allows access to the vendor registration page, and I should be required to complete the vendor registration process, and I should require admin approval before accessing vendor features
+
+### AT6.3 – Admin
+**Given** I am a new authenticated user without a role
+**When** i select admin 
+**Then** I should be temporarily assigned a role that allows access to the admin application page, and I should be able to submit an admin application, and I should require approval before accessing admin features
+
+
+---

@@ -1,27 +1,70 @@
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  query, 
-  where, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
   orderBy,
-  serverTimestamp 
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase.jsx';
 
+/**
+ * Handles vendor application submission, review, and approval.
+ * This service is responsible for generating a unique shop number
+ * and updating both the application and user records on approval.
+ */
 class VendorApplicationService {
-  
   constructor() {
     this.collectionName = 'vendorApplications';
   }
 
+  /**
+   * Generates a unique shop number for each approved vendor.
+   * The value is based on the current date, userId, and applicationId.
+   */
+  generateShopNumber(applicationId, userId) {
+    const safeApplicationId = (applicationId || '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 6)
+      .toUpperCase();
+
+    const safeUserId = (userId || '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .slice(0, 4)
+      .toUpperCase();
+
+    const datePart = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
+    return `SHOP-${datePart}-${safeUserId}-${safeApplicationId}`;
+  }
+
+  /**
+   * Builds the vendor profile object that is stored on the approved user record.
+   */
+  buildVendorProfile(applicationData, shopNumber) {
+    return {
+      businessName: applicationData.businessName,
+      businessDescription: applicationData.businessDescription,
+      businessPhone: applicationData.businessPhone,
+      businessAddress: applicationData.businessAddress,
+      businessType: applicationData.businessType,
+      shopNumber,
+      verifiedAt: serverTimestamp()
+    };
+  }
+
+  /**
+   * Submits a new vendor application.
+   * Prevents a user from submitting another application while one is still pending.
+   */
   async submitApplication(userId, userEmail, userName, businessData) {
     try {
       const existingApp = await this.getUserPendingApplication(userId);
-      
+
       if (existingApp) {
         throw new Error('You already have a pending vendor application');
       }
@@ -37,6 +80,7 @@ class VendorApplicationService {
         businessType: businessData.businessType,
         documents: [],
         status: 'pending',
+        shopNumber: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         reviewedBy: null,
@@ -52,6 +96,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns only vendor applications that are still waiting for review.
+   */
   async getPendingApplications() {
     try {
       const q = query(
@@ -63,10 +110,10 @@ class VendorApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((docSnapshot) => {
         applications.push({
-          id: doc.id,
-          ...doc.data()
+          id: docSnapshot.id,
+          ...docSnapshot.data()
         });
       });
 
@@ -77,6 +124,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns all vendor applications for admin review.
+   */
   async getAllApplications() {
     try {
       const q = query(
@@ -87,10 +137,10 @@ class VendorApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((docSnapshot) => {
         applications.push({
-          id: doc.id,
-          ...doc.data()
+          id: docSnapshot.id,
+          ...docSnapshot.data()
         });
       });
 
@@ -101,6 +151,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns all applications submitted by a specific user.
+   */
   async getUserApplications(userId) {
     try {
       const q = query(
@@ -112,10 +165,10 @@ class VendorApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((doc) => {
+      querySnapshot.forEach((docSnapshot) => {
         applications.push({
-          id: doc.id,
-          ...doc.data()
+          id: docSnapshot.id,
+          ...docSnapshot.data()
         });
       });
 
@@ -126,6 +179,9 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Checks whether a user already has a pending vendor application.
+   */
   async getUserPendingApplication(userId) {
     try {
       const q = query(
@@ -135,15 +191,15 @@ class VendorApplicationService {
       );
 
       const querySnapshot = await getDocs(q);
-      
+
       if (querySnapshot.empty) {
         return null;
       }
 
-      const doc = querySnapshot.docs[0];
+      const firstApplication = querySnapshot.docs[0];
       return {
-        id: doc.id,
-        ...doc.data()
+        id: firstApplication.id,
+        ...firstApplication.data()
       };
     } catch (error) {
       console.error('Error checking pending application:', error);
@@ -151,6 +207,15 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Approves a vendor application.
+   * This updates both:
+   * 1. the vendor application record
+   * 2. the user record
+   *
+   * The user only becomes a valid vendor after role, status, and shop number
+   * have all been written successfully.
+   */
   async approveApplication(applicationId, reviewerId, reviewNotes = '') {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -162,35 +227,41 @@ class VendorApplicationService {
 
       const applicationData = applicationDoc.data();
 
+      // Generate a shop number if one has not already been assigned.
+      const shopNumber =
+        applicationData.shopNumber ||
+        this.generateShopNumber(applicationId, applicationData.userId);
+
+      // Update the vendor application with its final approval details.
       await updateDoc(applicationRef, {
         status: 'approved',
+        shopNumber,
         reviewedBy: reviewerId,
         reviewedAt: serverTimestamp(),
         reviewNotes,
         updatedAt: serverTimestamp()
       });
 
+      // Update the user so they can access the vendor dashboard.
       const userRef = doc(db, 'users', applicationData.userId);
       await updateDoc(userRef, {
         role: 'vendor',
-        vendorProfile: {
-          businessName: applicationData.businessName,
-          businessDescription: applicationData.businessDescription,
-          businessPhone: applicationData.businessPhone,
-          businessAddress: applicationData.businessAddress,
-          businessType: applicationData.businessType,
-          verifiedAt: serverTimestamp()
-        },
+        status: 'approved',
+        shopNumber,
+        vendorProfile: this.buildVendorProfile(applicationData, shopNumber),
         updatedAt: serverTimestamp()
       });
 
-      return true;
+      return shopNumber;
     } catch (error) {
       console.error('Error approving vendor application:', error);
       throw error;
     }
   }
 
+  /**
+   * Rejects a vendor application and stores the reviewer details.
+   */
   async rejectApplication(applicationId, reviewerId, reviewNotes) {
     try {
       const applicationRef = doc(db, this.collectionName, applicationId);
@@ -215,18 +286,19 @@ class VendorApplicationService {
     }
   }
 
+  /**
+   * Returns simple summary stats for the admin dashboard cards and filters.
+   */
   async getApplicationStats() {
     try {
       const allApps = await this.getAllApplications();
-      
-      const stats = {
-        total: allApps.length,
-        pending: allApps.filter(app => app.status === 'pending').length,
-        approved: allApps.filter(app => app.status === 'approved').length,
-        rejected: allApps.filter(app => app.status === 'rejected').length
-      };
 
-      return stats;
+      return {
+        total: allApps.length,
+        pending: allApps.filter((app) => app.status === 'pending').length,
+        approved: allApps.filter((app) => app.status === 'approved').length,
+        rejected: allApps.filter((app) => app.status === 'rejected').length
+      };
     } catch (error) {
       console.error('Error fetching statistics:', error);
       throw error;

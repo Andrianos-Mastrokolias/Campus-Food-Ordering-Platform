@@ -1,0 +1,87 @@
+/* Main container */
+.tracking-container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 30px;
+  font-family: Arial, sans-serif;
+}
+
+/* Header */
+.tracking-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.tracking-header h1 {
+  font-size: 32px;
+  margin-bottom: 5px;
+}
+
+/* Grid layout */
+.orders-grid {
+  display: grid;
+  gap: 20px;
+}
+
+/* Order card */
+.order-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Top row */
+.order-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Status badge */
+.status-badge {
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 8px;
+  background: #eee;
+  border-radius: 10px;
+  margin: 15px 0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #4caf50;
+  transition: width 0.4s ease;
+}
+
+/* Items */
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+/* Total */
+.total {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  color: gray;
+}
+
+/* Highlights the most recent order so students can easily see it */
+.highlight {
+  border: 2px solid #4CAF50;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.3);
+}

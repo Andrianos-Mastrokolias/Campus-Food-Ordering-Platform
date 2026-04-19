@@ -1,9 +1,8 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/login";
 import SelectRole from "./pages/SelectRole";
 import StudentHome from "./pages/StudentHome";
 import VendorDashboard from "./pages/VendorDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
 import Unauthorized from "./pages/unauthorized";
 import ProtectedRoute from "./components/protectedRoute";
 import AdminApplicationForm from "./components/AdminApplication/AdminApplicationForm";
@@ -11,6 +10,7 @@ import AdminReviewDashboard from "./components/AdminApplication/AdminReviewDashb
 import VendorRegistrationForm from "./components/VendorRegistration/VendorRegistrationForm";
 import AdminVendorReview from "./components/VendorReview/AdminVendorReview";
 import Layout from "./components/Layout";
+import OrderTracking from "./pages/OrderTracking";
 
 export default function App() {
   return (
@@ -19,7 +19,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/select-role" element={<SelectRole />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        
+
         <Route
           path="/home"
           element={
@@ -28,7 +28,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        
+        {/* =========================
+    {/* Student order tracking page */}
+        {/* This allows students to view all their past and active orders */}
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <OrderTracking />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/vendor/dashboard"
           element={
@@ -37,14 +48,11 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        
+
+        {/* Redirect the old admin dashboard route to the active admin applications page. */}
         <Route
           path="/admin/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
+          element={<Navigate to="/admin/applications" replace />}
         />
 
         <Route
@@ -82,7 +90,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route path="*" element={<Login />} />
       </Routes>
     </Layout>

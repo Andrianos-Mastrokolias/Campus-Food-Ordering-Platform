@@ -5,7 +5,7 @@ import { auth } from '../firebase.jsx';
 import './Layout.css';
 
 export default function Layout({ children }) {
-  const { user, role } = useAuth();
+  const { user, role, status } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -21,6 +21,12 @@ export default function Layout({ children }) {
     return <>{children}</>;
   }
 
+  // Show the vendor dashboard only after the vendor has been approved.
+  const isApprovedVendor = role === 'vendor' && status === 'approved';
+
+  // Show admin review pages only after the admin request has been approved.
+  const isApprovedAdmin = role === 'admin' && status === 'approved';
+
   return (
     <div className="layout">
       <header className="header">
@@ -30,35 +36,62 @@ export default function Layout({ children }) {
             <div className="user-info">
               Welcome, {user.displayName || user.email} ({role})
             </div>
+
             {role === 'student' && (
               <>
-                <Link to="/home" className="nav-link">Home</Link>
-                <Link to="/register-vendor" className="nav-link">Register as Vendor</Link>
-                <Link to="/apply-admin" className="nav-link">Apply for Admin</Link>
+                {/* ================= STUDENT NAVIGATION ================= */}
+
+                {/* Home page - browse all menu items */}
+                <Link to="/home" className="nav-link">
+                  Home
+                </Link>
+
+                {/* Order tracking page - view all placed orders */}
+                <Link to="/orders" className="nav-link">
+                  My Orders
+                </Link>
+
+                {/* Vendor registration page */}
+                <Link to="/register-vendor" className="nav-link">
+                  Register as Vendor
+                </Link>
+
+                {/* Admin application page */}
+                <Link to="/apply-admin" className="nav-link">
+                  Apply for Admin
+                </Link>
+
+                {/* ====================================================== */}
               </>
             )}
-            {role === 'vendor' && (
+
+            {isApprovedVendor && (
               <>
                 <Link to="/vendor/dashboard" className="nav-link">Dashboard</Link>
                 <Link to="/apply-admin" className="nav-link">Apply for Admin</Link>
               </>
             )}
-            {role === 'admin' && (
+
+            {isApprovedAdmin && (
               <>
-                <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
                 <Link to="/admin/applications" className="nav-link">Admin Applications</Link>
                 <Link to="/admin/vendors" className="nav-link">Vendor Applications</Link>
               </>
             )}
+
             <button onClick={handleLogout} className="nav-link logout-btn">
               Logout
             </button>
           </nav>
         </div>
       </header>
+
       <main className="main-content">
         {children}
       </main>
+
+
+
       <footer className="footer">
         © 2026 Campus Food Ordering Platform - COMS3009A Software Design
       </footer>

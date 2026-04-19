@@ -18,3 +18,4 @@ export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
 
 console.log("FIREBASE CONFIG:", firebaseConfig);
+console.log("API KEY =", import.meta.env.VITE_FIREBASE_API_KEY);
