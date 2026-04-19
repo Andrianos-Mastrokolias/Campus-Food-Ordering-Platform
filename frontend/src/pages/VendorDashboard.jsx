@@ -4,6 +4,17 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
 import "../App.css";
+// ------------------------------------------------------
+// ORDER STATUS FLOW (CONTROLLED WORKFLOW)
+// This ensures vendors cannot randomly set statuses.
+// Students will see this exact progression.
+// ------------------------------------------------------
+const ORDER_STATUS_FLOW = [
+  "pending",
+  "preparing",
+  "ready",
+  "completed"
+];
 
 export default function VendorDashboard() {
   const { user, role, loading } = useAuth();
@@ -81,6 +92,36 @@ export default function VendorDashboard() {
 
     fetchVendorOrders();
   }, [user, role, loading]);
+
+  // ------------------------------------------------------
+// UPDATE ORDER STATUS FUNCTION
+// This allows vendors to move orders through a strict pipeline:
+// pending → preparing → ready → completed
+// This updates Firestore so students see real-time changes.
+// ------------------------------------------------------
+const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    // Reference the specific order document in Firestore
+    const orderRef = doc(db, "orders", orderId);
+
+    // Update only the status field
+    await updateDoc(orderRef, {
+      status: newStatus,
+    });
+
+    // Update local UI state instantly (no refresh needed)
+    setVendorOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId
+          ? { ...order, status: newStatus }
+          : order
+      )
+    );
+
+  } catch (error) {
+    console.error("Error updating order status:", error.message);
+  }
+};
 
 
   const handleInputChange = (event) => {
@@ -384,7 +425,35 @@ export default function VendorDashboard() {
                   {/* Show order summary information */}
                   <h3>Order #{order.id.slice(0, 6)}</h3>
                   <p><strong>Student ID:</strong> {order.studentId}</p>
-                  <p><strong>Status:</strong> {order.status}</p>
+                  {/* ------------------------------------------------------
+    STATUS CONTROL DROPDOWN
+    Vendors can only move forward in workflow.
+------------------------------------------------------ */}
+                  <p><strong>Status:</strong></p>
+
+                  <select
+                    value={order.status}
+                    onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                    style={{
+                      padding: "6px",
+                      borderRadius: "6px",
+                      marginTop: "5px"
+                    }}
+                  >
+                    {ORDER_STATUS_FLOW.map((statusOption) => (
+                      <option
+                        key={statusOption}
+                        value={statusOption}
+                        disabled={
+                          // Prevent skipping backwards/forwards incorrectly
+                          ORDER_STATUS_FLOW.indexOf(statusOption) <
+                          ORDER_STATUS_FLOW.indexOf(order.status)
+                        }
+                      >
+                        {statusOption.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
                   <p><strong>Total:</strong> R{order.total.toFixed(2)}</p>
 
                   {/* Show each item inside the order */}

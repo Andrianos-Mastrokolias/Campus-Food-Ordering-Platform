@@ -250,6 +250,21 @@
   font-weight: 600;
 }
 
+.track-order-btn {
+  margin-top: 10px;
+  padding: 10px 16px;
+  border: none;
+  background: #4CAF50;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.track-order-btn:hover {
+  background: #45a049;
+}
+
 @media (max-width: 768px) {
   .vendors-grid {
     grid-template-columns: 1fr;

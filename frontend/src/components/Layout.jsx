@@ -39,9 +39,29 @@ export default function Layout({ children }) {
 
             {role === 'student' && (
               <>
-                <Link to="/home" className="nav-link">Home</Link>
-                <Link to="/register-vendor" className="nav-link">Register as Vendor</Link>
-                <Link to="/apply-admin" className="nav-link">Apply for Admin</Link>
+                {/* ================= STUDENT NAVIGATION ================= */}
+
+                {/* Home page - browse all menu items */}
+                <Link to="/home" className="nav-link">
+                  Home
+                </Link>
+
+                {/* Order tracking page - view all placed orders */}
+                <Link to="/orders" className="nav-link">
+                  My Orders
+                </Link>
+
+                {/* Vendor registration page */}
+                <Link to="/register-vendor" className="nav-link">
+                  Register as Vendor
+                </Link>
+
+                {/* Admin application page */}
+                <Link to="/apply-admin" className="nav-link">
+                  Apply for Admin
+                </Link>
+
+                {/* ====================================================== */}
               </>
             )}
 
@@ -69,6 +89,8 @@ export default function Layout({ children }) {
       <main className="main-content">
         {children}
       </main>
+
+
 
       <footer className="footer">
         © 2026 Campus Food Ordering Platform - COMS3009A Software Design
