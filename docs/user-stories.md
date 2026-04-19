@@ -23,4 +23,8 @@ Sprint 2:
 
 5B. As an admin, I want the system to create a shop number once a vendor is accepted, so that each approved shop has a unique identifier in the system.
 
-6. As a student, I want my placed orders to be linked to the correct vendor and tracked through the system, so that the platform works as one connected ordering system.
+6A. As a user, I want to select the student role after logging in so that I can immediately access the student homepage and platform features.
+
+6B.  As a user, I want to select the vendor role after logging in so that I can complete the vendor registration process and gain access to vendor features once approved.
+
+6C. As a user, I want to select admin role after logging in so that I can complete and submit the admin application form and gain admin privileges once approved.
