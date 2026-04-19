@@ -93,189 +93,182 @@ When I try to access vendor approval or suspension actions
 Then I should be denied access
 
 # Sprint 2
-##1. Student tracks order status
-###Acceptance Test 1.1
 
-Given a student has placed an order
-When the student views their order history or active orders
-Then the system must display the current order status
 
-###Acceptance Test 1.2
+## 1. Student tracks order status
 
-Given an order has just been placed
-When the student checks the order
-Then the status must show as Pending
+### AT1.1 – View order status
+**Given** a student has placed an order  
+**When** the student views their orders  
+**Then** the system displays the current order status  
 
-###Acceptance Test 1.3
+### AT1.2 – Initial order status
+**Given** an order has just been placed  
+**When** the student checks the order  
+**Then** the status is **Pending**  
 
-Given the vendor has started working on the order
-When the vendor updates the status
-Then the student must see the status as Being Prepared
+### AT1.3 – Order in preparation
+**Given** the vendor has started preparing the order  
+**When** the status is updated  
+**Then** the student sees **Being Prepared**  
 
-###Acceptance Test 1.4
+### AT1.4 – Order ready
+**Given** the order is finished  
+**When** the vendor marks it as ready  
+**Then** the student sees **Ready**  
 
-Given the vendor has finished preparing the order
-When the vendor updates the status to ready
-Then the student must see the status as Ready
+### AT1.5 – Order completed
+**Given** the order has been collected  
+**When** the status is updated  
+**Then** the student sees **Completed**  
 
-###Acceptance Test 1.5
+---
 
-Given the order has been collected or completed
-When the status is updated
-Then the student must see the status as Completed
+## 2. Vendor views and manages orders
 
-##2. Vendor views all orders for their shop
-###Acceptance Test 2.1
+### AT2.1 – View vendor orders
+**Given** a vendor is logged in  
+**When** the vendor views the orders page  
+**Then** all orders for their shop are displayed  
 
-Given a vendor is logged into the vendor dashboard
-When the vendor opens the orders page
-Then the system must display all orders linked to that vendor’s shop
+### AT2.2 – Order details visible
+**Given** orders exist  
+**When** the vendor views them  
+**Then** order details (items, user, status) are shown  
 
-###Acceptance Test 2.2
+### AT2.3 – Update order status
+**Given** a vendor selects an order  
+**When** the vendor updates the status  
+**Then** the system saves the updated status  
 
-Given there are multiple orders placed for the vendor’s shop
-When the vendor views incoming orders
-Then each order must show relevant details such as order items, customer, and current status
+### AT2.4 – Vendor isolation
+**Given** multiple vendors exist  
+**When** a vendor views orders  
+**Then** only their own shop’s orders are shown  
 
-###Acceptance Test 2.3
+---
 
-Given a vendor is viewing an order
-When the vendor updates the order status
-Then the updated status must be saved in the system
+## 3. Menu items show as sold out
 
-###Acceptance Test 2.4
+### AT3.1 – Item available
+**Given** an item has stock > 0  
+**When** students view the menu  
+**Then** the item is available  
 
-Given a vendor is logged in
-When the vendor views orders
-Then the vendor must not see orders belonging to another vendor
+### AT3.2 – Item sold out
+**Given** an item’s stock reaches 0  
+**When** the menu updates  
+**Then** the item is marked **Sold Out**  
 
-##3. Menu items automatically show sold out at stock 0
-###Acceptance Test 3.1
+### AT3.3 – Prevent ordering sold-out items
+**Given** an item is sold out  
+**When** a student attempts to order it  
+**Then** the system blocks the order  
 
-Given a menu item has stock greater than 0
-When students view the menu
-Then the item must be shown as available
+### AT3.4 – Restock item
+**Given** stock is increased above 0  
+**When** the menu updates  
+**Then** the item becomes available again  
 
-###Acceptance Test 3.2
+---
 
-Given a menu item’s stock reaches 0
-When the menu is refreshed or reloaded
-Then the item must be marked as Sold Out
+## 4. Vendor registration and verification
 
-###Acceptance Test 3.3
+### AT4.1 – Submit vendor application
+**Given** a user wants to become a vendor  
+**When** they submit the registration form  
+**Then** a vendor application is created  
 
-Given a menu item is marked as sold out
-When a student attempts to place an order containing that item
-Then the system must prevent the order from being placed
+### AT4.2 – Application status pending
+**Given** a vendor application is submitted  
+**When** it is stored  
+**Then** its status is **Pending**  
 
-###Acceptance Test 3.4
+### AT4.3 – Restrict access before approval
+**Given** a vendor is not approved  
+**When** they try to access the vendor dashboard  
+**Then** access is denied  
 
-Given a vendor increases the stock of a sold out item above 0
-When the menu updates
-Then the item must no longer display as sold out
+### AT4.4 – Allow access after approval
+**Given** a vendor is approved  
+**When** they log in  
+**Then** they can access the vendor dashboard  
 
-##4. Vendor registration and verification request
-###Acceptance Test 4.1
+### AT4.5 – Prevent duplicate applications
+**Given** a user already has a pending request  
+**When** they submit another application  
+**Then** the system rejects it  
 
-Given a student wants to become a vendor
-When the student opens the vendor registration form
-Then the system must allow them to submit business details
+---
 
-###Acceptance Test 4.2
+## 5A. Admin reviews vendor applications
 
-Given a student submits the vendor registration form
-When the submission is successful
-Then the system must create a vendor application with status Pending
+### AT5A.1 – View applications
+**Given** an admin is logged in  
+**When** they open vendor applications  
+**Then** all applications are displayed  
 
-###Acceptance Test 4.3
+### AT5A.2 – View vendor details
+**Given** an application exists  
+**When** the admin selects it  
+**Then** full shop details are shown  
 
-Given a vendor application is still pending
-When the applicant tries to access the vendor dashboard
-Then the system must deny access
+### AT5A.3 – Verify business information
+**Given** the admin is reviewing an application  
+**When** viewing details  
+**Then** business name, description, phone, and address are visible  
 
-###Acceptance Test 4.4
+### AT5A.4 – Approve or reject
+**Given** the admin reviews an application  
+**When** they make a decision  
+**Then** the system saves the result  
 
-Given a vendor application has been approved
-When the applicant logs in
-Then the system must allow access to the vendor dashboard
+---
 
-###Acceptance Test 4.5
+## 5B. Shop number generation
 
-Given a user already has a pending vendor request
-When they try to submit another vendor application
-Then the system must prevent a duplicate pending request
+### AT5B.1 – Generate shop number
+**Given** a vendor application is approved  
+**When** approval occurs  
+**Then** a unique shop number is generated  
 
-##5A. Admin sees vendor shop details before approval
-###Acceptance Test 5A.1
+### AT5B.2 – Store shop number in application
+**Given** a vendor is approved  
+**When** the system updates the record  
+**Then** the shop number is saved in the application  
 
-Given an admin is logged in
-When the admin opens the vendor applications page
-Then the system must display submitted vendor applications
+### AT5B.3 – Store shop number in user profile
+**Given** a vendor is approved  
+**When** the user record is updated  
+**Then** the shop number is stored in the vendor profile  
 
-###Acceptance Test 5A.2
+### AT5B.4 – Ensure uniqueness
+**Given** multiple vendors are approved  
+**When** shop numbers are generated  
+**Then** each shop number is unique  
 
-Given a vendor application exists
-When the admin selects that application
-Then the system must display the vendor’s shop details
+---
 
-###Acceptance Test 5A.3
+## 6. Orders linked to correct vendor
 
-Given the admin is viewing a vendor application
-When the admin reviews the details
-Then the system must show information such as business name, description, phone, address, and applicant identity
+### AT6.1 – Link order to vendor
+**Given** a student places an order  
+**When** the order is saved  
+**Then** it is linked to the correct vendor  
 
-###Acceptance Test 5A.4
+### AT6.2 – Vendor sees correct orders
+**Given** an order exists  
+**When** the vendor views their orders  
+**Then** only their orders are shown  
 
-Given the admin has reviewed the vendor details
-When the admin chooses approve or reject
-Then the system must save the review decision
+### AT6.3 – Student sees correct vendor
+**Given** a student views an order  
+**When** the order is displayed  
+**Then** it shows the correct vendor and status  
 
-##5B. Shop number generation on vendor approval
-###Acceptance Test 5B.1
+### AT6.4 – Maintain correct association
+**Given** multiple vendors exist  
+**When** orders are processed  
+**Then** each order remains linked to the correct vendor  
 
-Given a vendor application is pending
-When the admin approves the application
-Then the system must generate a unique shop number
-
-###Acceptance Test 5B.2
-
-Given a vendor application has been approved
-When the approval is processed
-Then the generated shop number must be stored in the vendor application record
-
-###Acceptance Test 5B.3
-
-Given a vendor application has been approved
-When the user record is updated
-Then the generated shop number must also be stored in the approved vendor’s profile
-
-###Acceptance Test 5B.4
-
-Given two different vendors are approved
-When shop numbers are generated
-Then each vendor must receive a different unique shop number
-
-##6. Orders linked to the correct vendor and tracked through the system
-###Acceptance Test 6.1
-
-Given a student places an order from a specific vendor
-When the order is saved
-Then the order must be linked to that vendor in the system
-
-###Acceptance Test 6.2
-
-Given an order is linked to a vendor
-When the vendor views their order dashboard
-Then that order must appear only for the correct vendor
-
-###Acceptance Test 6.3
-
-Given a student has placed an order
-When the student views their order status
-Then the order must show the correct vendor and current tracking status
-
-###Acceptance Test 6.4
-
-Given multiple vendors exist on the platform
-When orders are placed at different shops
-Then each order must remain associated with the correct vendor throughout the workflow
+---
