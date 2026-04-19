@@ -155,7 +155,7 @@ const latestOrderId = orders.length > 0 ? orders[0].id : null;
                 {order.items.map((item, index) => (
                   <div key={index} className="item-row">
                     <span>{item.name}</span>
-                    <span>R{item.price}</span>
+                    <span>{item.price}</span>
                   </div>
                 ))}
               </div>
