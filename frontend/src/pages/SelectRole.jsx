@@ -112,14 +112,16 @@ export default function SelectRole() {
 
       // Admin role selection
       } else if (selectedRole === "admin") {
-        /**
-         * Admin role cannot be self-assigned.
-         * Users must apply through an admin approval process.
-         */
-        alert("Admin access must be requested through the Admin Application form.");
+        // Keep user as student so they are allowed to access /apply-admin
+        await updateDoc(userRef, {
+           role: "student",
+           status: null,
+        });
 
-        // Redirect back to login or appropriate page
-        navigate("/login");
+        setRole("student");
+        setStatus(null);
+
+        navigate("/apply-admin");
       }
     } catch (error) {
       // Log error for debugging
