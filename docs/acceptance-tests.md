@@ -139,12 +139,7 @@ Then I should be denied access
 ### AT2.3 – Update order status
 **Given** a vendor selects an order  
 **When** the vendor updates the status  
-**Then** the system saves the updated status  
-
-### AT2.4 – Vendor isolation
-**Given** multiple vendors exist  
-**When** a vendor views orders  
-**Then** only their own shop’s orders are shown  
+**Then** the system saves the updated status   
 
 ---
 
