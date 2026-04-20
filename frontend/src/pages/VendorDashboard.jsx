@@ -4,10 +4,12 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
 import "../App.css";
+
 // ------------------------------------------------------
-// ORDER STATUS FLOW (CONTROLLED WORKFLOW)
-// This ensures vendors cannot randomly set statuses.
-// Students will see this exact progression.
+// ORDER STATUS FLOW
+// This defines the valid order status progression.
+// Vendors should move orders forward through these stages
+// so students see a consistent tracking flow.
 // ------------------------------------------------------
 const ORDER_STATUS_FLOW = [
   "pending",
@@ -17,23 +19,32 @@ const ORDER_STATUS_FLOW = [
 ];
 
 export default function VendorDashboard() {
+  // Auth context gives access to the logged-in user, their role, and loading state
   const { user, role, loading } = useAuth();
 
+  // Stores all menu items that belong to the logged-in vendor
   const [menuItems, setMenuItems] = useState([]);
-  // Stores all orders that belong to the currently logged-in vendor
+
+  // Stores all orders that belong to the logged-in vendor
   const [vendorOrders, setVendorOrders] = useState([]);
 
+  // Stores the current values entered in the menu item form
+  // stock keeps track of how many units of the item are available
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: "",
     photoUrl: "",
-    stock: 1, // stores how many units of the item are available
+    stock: 1,
     available: true,
   });
 
+  // Stores the ID of the item currently being edited
+  // If null, the form is being used to add a new item
   const [editingItemId, setEditingItemId] = useState(null);
 
+  // Fetch all menu items that belong to the logged-in vendor
+  // This ensures each vendor only sees and manages their own menu
   useEffect(() => {
     const fetchMenuItems = async () => {
       if (loading || !user || role !== "vendor") return;
@@ -43,6 +54,7 @@ export default function VendorDashboard() {
         const q = query(menuItemsRef, where("vendorId", "==", user.uid));
         const querySnapshot = await getDocs(q);
 
+        // Convert Firestore documents into normal JavaScript objects
         const items = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -57,11 +69,10 @@ export default function VendorDashboard() {
     fetchMenuItems();
   }, [user, role, loading]);
 
-    // Fetch all orders that belong to the logged-in vendor.
-  // This supports User Story 2: vendor needs to see all orders.
+  // Fetch all orders that belong to the logged-in vendor
+  // Vendors can see their incoming orders
   useEffect(() => {
     const fetchVendorOrders = async () => {
-      // Wait until auth is finished loading and make sure a vendor is logged in
       if (loading || !user || role !== "vendor") return;
 
       try {
@@ -69,7 +80,6 @@ export default function VendorDashboard() {
         const ordersRef = collection(db, "orders");
 
         // Query only the orders that belong to this vendor
-        // orderBy is removed for now to avoid Firestore index issues during development
         const q = query(
           ordersRef,
           where("vendorId", "==", user.uid)
@@ -93,37 +103,33 @@ export default function VendorDashboard() {
     fetchVendorOrders();
   }, [user, role, loading]);
 
-  // ------------------------------------------------------
-// UPDATE ORDER STATUS FUNCTION
-// This allows vendors to move orders through a strict pipeline:
-// pending → preparing → ready → completed
-// This updates Firestore so students see real-time changes.
-// ------------------------------------------------------
-const updateOrderStatus = async (orderId, newStatus) => {
-  try {
-    // Reference the specific order document in Firestore
-    const orderRef = doc(db, "orders", orderId);
+  // Update the status of a specific order in Firestore
+  // This allows the vendor to move the order through the workflow
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      // Reference the specific order document in Firestore
+      const orderRef = doc(db, "orders", orderId);
 
-    // Update only the status field
-    await updateDoc(orderRef, {
-      status: newStatus,
-    });
+      // Update only the status field
+      await updateDoc(orderRef, {
+        status: newStatus,
+      });
 
-    // Update local UI state instantly (no refresh needed)
-    setVendorOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.id === orderId
-          ? { ...order, status: newStatus }
-          : order
-      )
-    );
+      // Update local UI state instantly without needing a page refresh
+      setVendorOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId
+            ? { ...order, status: newStatus }
+            : order
+        )
+      );
+    } catch (error) {
+      console.error("Error updating order status:", error.message);
+    }
+  };
 
-  } catch (error) {
-    console.error("Error updating order status:", error.message);
-  }
-};
-
-
+  // Handles all form input changes
+  // Converts checkboxes to booleans and number inputs to numbers
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
 
@@ -138,6 +144,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }));
   };
 
+  // Handles adding a new menu item or updating an existing one
+  // Also validates that required fields are filled in correctly
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -145,41 +153,48 @@ const updateOrderStatus = async (orderId, newStatus) => {
     const trimmedDescription = formData.description.trim();
     const trimmedPrice = formData.price.trim();
 
+    // Validation: item name must not be empty
     if (!trimmedName) {
       alert("Please enter an item name.");
       return;
     }
 
+    // Validation: description must not be empty
     if (!trimmedDescription) {
       alert("Please enter an item description.");
       return;
     }
 
+    // Validation: price must not be empty
     if (!trimmedPrice) {
       alert("Please enter a price.");
       return;
     }
 
+    // Validation: stock cannot be negative
     if (formData.stock < 0) {
       alert("Stock cannot be negative.");
       return;
     }
-  
+
     if (editingItemId !== null) {
+      // Update an existing menu item in Firestore
+      // Stock is saved and availability is derived from stock
       const updatedMenuItem = {
         name: trimmedName,
         description: trimmedDescription,
         price: trimmedPrice,
         photoUrl: formData.photoUrl,
-        stock: formData.stock, // saves the stock quantity when editing
-        available: formData.stock > 0, // item is only available if stock is above 0
+        stock: formData.stock,
+        available: formData.stock > 0,
       };
-  
+
       try {
         const itemRef = doc(db, "menuItems", editingItemId);
-  
+
         await updateDoc(itemRef, updatedMenuItem);
-  
+
+        // Update local state so the UI reflects the latest item values immediately
         setMenuItems((previousMenuItems) =>
           previousMenuItems.map((item) =>
             item.id === editingItemId
@@ -187,22 +202,24 @@ const updateOrderStatus = async (orderId, newStatus) => {
               : item
           )
         );
-  
+
         setEditingItemId(null);
       } catch (error) {
         console.error("Error updating menu item:", error.message);
       }
     } else {
+      // Create a new menu item for this vendor
+      // If stock is 0, the item is automatically marked as sold out
       const newMenuItem = {
         vendorId: user.uid,
         name: trimmedName,
         description: trimmedDescription,
         price: trimmedPrice,
         photoUrl: formData.photoUrl,
-        stock: formData.stock, // saves the stock quantity for new items
-        available: formData.stock > 0, // automatically marks item sold out if stock is 0
+        stock: formData.stock,
+        available: formData.stock > 0,
       };
-  
+
       addDoc(collection(db, "menuItems"), newMenuItem)
         .then((docRef) => {
           setMenuItems((previousMenuItems) => [
@@ -214,27 +231,26 @@ const updateOrderStatus = async (orderId, newStatus) => {
           console.error("Error adding menu item:", error.message);
         });
     }
-  
+
+    // Reset the form back to its default state after submitting
     setFormData({
       name: "",
       description: "",
       price: "",
       photoUrl: "",
-      stock: 1, // reset stock back to default after submit
+      stock: 1,
       available: true,
     });
   };
 
-  // Toggle stock-based availability.
-  // If stock is above 0, clicking the button sets stock to 0 and marks the item sold out.
-  // If stock is 0, clicking the button restores stock to 1 and marks the item available again.
+  // Toggle stock-based availability
+  // If stock is above 0, set it to 0 to mark as sold out
+  // If stock is 0, restore it to 1 to mark as available again
   const toggleAvailability = async (id) => {
     const selectedItem = menuItems.find((item) => item.id === id);
 
     if (!selectedItem) return;
 
-    // If item currently has stock, make it sold out by setting stock to 0.
-    // If item is sold out, restore it with stock 1.
     const newStock = (selectedItem.stock ?? 0) > 0 ? 0 : 1;
     const newAvailability = newStock > 0;
 
@@ -246,6 +262,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
         available: newAvailability,
       });
 
+      // Update local state immediately after Firestore update
       setMenuItems((previousMenuItems) =>
         previousMenuItems.map((item) =>
           item.id === id
@@ -258,6 +275,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }
   };
 
+  // Load the selected item's current values into the form
+  // This allows the vendor to edit an existing menu item
   const handleEditClick = (item) => {
     setFormData({
       name: item.name,
@@ -271,19 +290,21 @@ const updateOrderStatus = async (orderId, newStatus) => {
     setEditingItemId(item.id);
   };
 
+  // Cancel edit mode and reset the form back to default values
   const handleCancelEdit = () => {
     setEditingItemId(null);
-  
+
     setFormData({
       name: "",
       description: "",
       price: "",
       photoUrl: "",
-      stock: 1, // reset stock when leaving edit mode
+      stock: 1,
       available: true,
     });
   };
 
+  // While authentication is still loading, show a loading message
   if (loading) {
     return <p style={{ textAlign: "center", marginTop: "80px" }}>Loading...</p>;
   }
@@ -296,6 +317,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
       </header>
 
       <main className="container">
+        {/* Menu management form section
+            Used to add new items or edit existing ones */}
         <section className="form-section">
           <h2>{editingItemId !== null ? "Edit Menu Item" : "Add Menu Item"}</h2>
 
@@ -368,6 +391,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
           </form>
         </section>
 
+        {/* Current menu section
+            Displays all menu items that belong to the vendor */}
         <section className="menu-section">
           <h2>Current Menu</h2>
 
@@ -387,7 +412,12 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 <h3>{item.name}</h3>
                 <p>{item.description}</p>
                 <p className="price">{item.price}</p>
+
+                {/* Shows the current stock value for each menu item */}
                 <p><strong>Stock:</strong> {item.stock ?? 0}</p>
+
+                {/* Availability is displayed based on stock
+                    If stock is 0, the item is shown as sold out */}
                 <p className={(item.stock ?? 0) > 0 ? "status available" : "status sold-out"}>
                   {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
                 </p>
@@ -413,6 +443,9 @@ const updateOrderStatus = async (orderId, newStatus) => {
             ))}
           </div>
         </section>
+
+        {/* Incoming orders section
+            Displays all orders that belong to the logged-in vendor */}
         <section className="menu-section">
           <h2>Incoming Orders</h2>
 
@@ -425,10 +458,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
                   {/* Show order summary information */}
                   <h3>Order #{order.id.slice(0, 6)}</h3>
                   <p><strong>Student ID:</strong> {order.studentId}</p>
-                  {/* ------------------------------------------------------
-    STATUS CONTROL DROPDOWN
-    Vendors can only move forward in workflow.
------------------------------------------------------- */}
+
+                  {/* Dropdown used to move an order through the allowed status flow */}
                   <p><strong>Status:</strong></p>
 
                   <select
@@ -445,7 +476,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                         key={statusOption}
                         value={statusOption}
                         disabled={
-                          // Prevent skipping backwards/forwards incorrectly
+                          // Prevent vendors from moving an order backwards in the workflow
                           ORDER_STATUS_FLOW.indexOf(statusOption) <
                           ORDER_STATUS_FLOW.indexOf(order.status)
                         }
@@ -454,6 +485,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                       </option>
                     ))}
                   </select>
+
                   <p><strong>Total:</strong> R{order.total.toFixed(2)}</p>
 
                   {/* Show each item inside the order */}
