@@ -51,6 +51,12 @@ export default function VendorDashboard() {
   // If null, the form is being used to add a new item
   const [editingItemId, setEditingItemId] = useState(null);
 
+  // Controls whether the edit modal popup is visible
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Stores the item currently being edited inside the modal
+  const [selectedItem, setSelectedItem] = useState(null);
+
   // Fetch the logged-in vendor's profile from the users collection
   // Vendor profile details were saved when the admin approved the vendor application
   useEffect(() => {
@@ -279,6 +285,9 @@ export default function VendorDashboard() {
         );
 
         setEditingItemId(null);
+        setSelectedItem(null);
+        setIsEditModalOpen(false);
+        setImagePreview("");
       } catch (error) {
         console.error("Error updating menu item:", error.message);
       }
@@ -377,7 +386,10 @@ export default function VendorDashboard() {
 
   // Load the selected item's current values into the form
   // This allows the vendor to edit an existing menu item
+  // Opens the edit modal and loads the selected item's details into the form
   const handleEditClick = (item) => {
+    setSelectedItem(item);
+
     setFormData({
       name: item.name,
       description: item.description,
@@ -386,15 +398,18 @@ export default function VendorDashboard() {
       stock: item.stock ?? 1,
       available: item.available,
     });
-  
+
     setImagePreview(item.photoUrl || "");
-  
     setEditingItemId(item.id);
+    setIsEditModalOpen(true);
   };
 
   // Cancel edit mode and reset the form back to default values
+  // Closes the edit modal and clears edit-related state
   const handleCancelEdit = () => {
     setEditingItemId(null);
+    setSelectedItem(null);
+    setIsEditModalOpen(false);
 
     setFormData({
       name: "",
@@ -404,7 +419,10 @@ export default function VendorDashboard() {
       stock: 1,
       available: true,
     });
+
+    setImagePreview("");
   };
+
 
   // While authentication is still loading, show a loading message
   if (loading) {
@@ -645,7 +663,99 @@ export default function VendorDashboard() {
           </section>
         </div>
       </main>
-  
+      {/* Edit modal popup for updating existing menu items */}
+      {isEditModalOpen && selectedItem && (
+        <div className="modal-overlay" onClick={handleCancelEdit}>
+          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Menu Item</h2>
+              <button type="button" className="modal-close-btn" onClick={handleCancelEdit}>
+                ×
+              </button>
+            </div>
+
+            <form className="menu-form" onSubmit={handleSubmit} onPaste={handleImagePaste}>
+              <input
+                type="text"
+                name="name"
+                placeholder="Item name"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
+
+              <textarea
+                name="description"
+                placeholder="Item description"
+                value={formData.description}
+                onChange={handleInputChange}
+              ></textarea>
+
+              <input
+                type="text"
+                name="price"
+                placeholder="Price e.g. R65.00"
+                value={formData.price}
+                onChange={handleInputChange}
+              />
+
+              <input
+                type="number"
+                name="stock"
+                placeholder="Stock quantity"
+                value={formData.stock}
+                onChange={handleInputChange}
+                min="0"
+              />
+
+              <input
+                type="text"
+                name="photoUrl"
+                placeholder="Photo URL"
+                value={formData.photoUrl}
+                onChange={handleInputChange}
+              />
+
+              {imagePreview && (
+                <div style={{ marginTop: "10px", textAlign: "center" }}>
+                  <p>Image preview:</p>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{
+                      width: "160px",
+                      height: "120px",
+                      objectFit: "cover",
+                      borderRadius: "10px",
+                    }}
+                  />
+                </div>
+              )}
+
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  name="available"
+                  checked={formData.available}
+                  onChange={handleInputChange}
+                />
+                Available
+              </label>
+
+              <div className="form-buttons">
+              <button type="submit">Update Item</button>
+
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={handleCancelEdit}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <LogoutButton />
       </div>
