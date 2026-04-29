@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
@@ -351,6 +351,30 @@ export default function VendorDashboard() {
     }
   };
 
+  // Deletes a menu item from Firestore and removes it from the dashboard immediately
+  // A confirmation message is shown first to prevent accidental deletion
+  const handleDeleteItem = async (id, itemName) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${itemName}"?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const itemRef = doc(db, "menuItems", id);
+
+      await deleteDoc(itemRef);
+
+      // Remove deleted item from local state so the UI updates without refreshing
+      setMenuItems((previousMenuItems) =>
+        previousMenuItems.filter((item) => item.id !== id)
+      );
+    } catch (error) {
+      console.error("Error deleting menu item:", error.message);
+      alert("Failed to delete menu item. Please try again.");
+    }
+  };
+
   // Load the selected item's current values into the form
   // This allows the vendor to edit an existing menu item
   const handleEditClick = (item) => {
@@ -537,7 +561,19 @@ export default function VendorDashboard() {
                     type="button"
                     onClick={() => toggleAvailability(item.id)}
                   >
-                    {(item.stock ?? 0) > 0 ? "Mark as Sold Out" : "Mark as Available"}
+                    {(item.stock ?? 0) > 0
+                      ? "Mark as Sold Out"
+                      : "Mark as Available"}
+                  </button>
+
+                  {/* Delete button for removing menu item */}
+                  <button
+                    className="delete-btn"
+                    type="button"
+                    onClick={() => handleDeleteItem(item.id, item.name)}
+                    style={{ backgroundColor: "#e74c3c", color: "white" }}
+                  >
+                    Delete
                   </button>
                 </div>
               </div>
