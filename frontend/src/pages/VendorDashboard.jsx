@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
@@ -22,6 +22,10 @@ export default function VendorDashboard() {
   // Auth context gives access to the logged-in user, their role, and loading state
   const { user, role, loading } = useAuth();
 
+  // Stores the logged-in vendor's approved business profile
+  // This allows the dashboard heading to show the actual vendor name and description
+  const [vendorProfile, setVendorProfile] = useState(null);
+
   // Stores all menu items that belong to the logged-in vendor
   const [menuItems, setMenuItems] = useState([]);
 
@@ -42,6 +46,28 @@ export default function VendorDashboard() {
   // Stores the ID of the item currently being edited
   // If null, the form is being used to add a new item
   const [editingItemId, setEditingItemId] = useState(null);
+
+  // Fetch the logged-in vendor's profile from the users collection
+  // Vendor profile details were saved when the admin approved the vendor application
+  useEffect(() => {
+    const fetchVendorProfile = async () => {
+      if (loading || !user || role !== "vendor") return;
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setVendorProfile(userData.vendorProfile || null);
+        }
+      } catch (error) {
+        console.error("Error fetching vendor profile:", error.message);
+      }
+    };
+
+    fetchVendorProfile();
+  }, [user, role, loading]);
 
   // Fetch all menu items that belong to the logged-in vendor
   // This ensures each vendor only sees and manages their own menu
@@ -312,8 +338,14 @@ export default function VendorDashboard() {
   return (
     <div className="app">
       <header className="header">
-        <h1>Vendor Dashboard</h1>
-        <p>Manage your food items, prices, descriptions, and availability.</p>
+        {/* Display vendor business name if it exists, otherwise fallback to default heading */}
+        <h1>{vendorProfile?.businessName || "Vendor Dashboard"}</h1>
+
+        {/* Display vendor business description if it exists, otherwise fallback to default description */}
+        <p>
+          {vendorProfile?.businessDescription ||
+            "Manage your food items, prices, descriptions, and availability."}
+        </p>
       </header>
 
       <main className="container">
