@@ -414,206 +414,44 @@ export default function VendorDashboard() {
   return (
     <div className="app">
       <header className="header">
-        {/* Display vendor business name if it exists, otherwise fallback to default heading */}
         <h1>{vendorProfile?.businessName || "Vendor Dashboard"}</h1>
-
-        {/* Display vendor business description if it exists, otherwise fallback to default description */}
         <p>
           {vendorProfile?.businessDescription ||
             "Manage your food items, prices, descriptions, and availability."}
         </p>
       </header>
-
-      <main className="container">
-        {/* Menu management form section
-            Used to add new items or edit existing ones */}
-        <section className="form-section">
-          <h2>{editingItemId !== null ? "Edit Menu Item" : "Add Menu Item"}</h2>
-
-          <form className="menu-form" onSubmit={handleSubmit} onPaste={handleImagePaste}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Item name"
-              value={formData.name}
-              onChange={handleInputChange}
-            />
-
-            <textarea
-              name="description"
-              placeholder="Item description"
-              value={formData.description}
-              onChange={handleInputChange}
-            ></textarea>
-
-            <input
-              type="text"
-              name="price"
-              placeholder="Price e.g. R65.00"
-              value={formData.price}
-              onChange={handleInputChange}
-            />
-
-            <input
-              type="number"
-              name="stock"
-              placeholder="Stock quantity"
-              value={formData.stock}
-              onChange={handleInputChange}
-              min="0"
-            />
-
-            <input
-              type="text"
-              name="photoUrl"
-              placeholder="Photo URL"
-              value={formData.photoUrl}
-              onChange={handleInputChange}
-            />
-
-            {/* Shows a preview when an image is pasted into the form */}
-            {imagePreview && (
-              <div style={{ marginTop: "10px", textAlign: "center" }}>
-                <p>Image preview:</p>
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  style={{
-                    width: "160px",
-                    height: "120px",
-                    objectFit: "cover",
-                    borderRadius: "10px",
-                  }}
-                />
-              </div>
-            )}
-
-            <label className="checkbox-row">
-              <input
-                type="checkbox"
-                name="available"
-                checked={formData.available}
-                onChange={handleInputChange}
-              />
-              Available
-            </label>
-
-            <div className="form-buttons">
-              <button type="submit">
-                {editingItemId !== null ? "Update Item" : "Add Item"}
-              </button>
-
-              {editingItemId !== null && (
-                <button
-                  type="button"
-                  className="cancel-btn"
-                  onClick={handleCancelEdit}
-                >
-                  Cancel Edit
-                </button>
-              )}
-            </div>
-          </form>
-        </section>
-
-        {/* Current menu section
-            Displays all menu items that belong to the vendor */}
-        <section className="menu-section">
-          <h2>Current Menu</h2>
-
-          <div className="menu-list">
-            {menuItems.map((item) => (
-              <div className="menu-card" key={item.id}>
-                {item.photoUrl ? (
-                  <img
-                    src={item.photoUrl}
-                    alt={item.name}
-                    className="menu-image"
-                  />
-                ) : (
-                  <div className="menu-image-placeholder">Image not available yet</div>
-                )}
-
-                <h3>{item.name}</h3>
-                <p>{item.description}</p>
-                <p className="price">{item.price}</p>
-
-                {/* Shows the current stock value for each menu item */}
-                <p><strong>Stock:</strong> {item.stock ?? 0}</p>
-
-                {/* Availability is displayed based on stock
-                    If stock is 0, the item is shown as sold out */}
-                <p className={(item.stock ?? 0) > 0 ? "status available" : "status sold-out"}>
-                  {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
-                </p>
-
-                <div className="button-row">
-                  <button
-                    className="edit-btn"
-                    type="button"
-                    onClick={() => handleEditClick(item)}
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    className="soldout-btn"
-                    type="button"
-                    onClick={() => toggleAvailability(item.id)}
-                  >
-                    {(item.stock ?? 0) > 0
-                      ? "Mark as Sold Out"
-                      : "Mark as Available"}
-                  </button>
-
-                  {/* Delete button for removing menu item */}
-                  <button
-                    className="delete-btn"
-                    type="button"
-                    onClick={() => handleDeleteItem(item.id, item.name)}
-                    style={{ backgroundColor: "#e74c3c", color: "white" }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Incoming orders section
-            Displays all orders that belong to the logged-in vendor */}
-        <section className="menu-section">
+  
+      <main className="vendor-dashboard-layout">
+        {/* TOP SECTION: Incoming Orders */}
+        <section className="orders-section">
           <h2>Incoming Orders</h2>
-
+  
           {vendorOrders.length === 0 ? (
             <p>No orders yet.</p>
           ) : (
-            <div className="menu-list">
+            <div className="orders-row">
               {vendorOrders.map((order) => (
-                <div className="menu-card" key={order.id}>
-                  {/* Show order summary information */}
+                <div className="order-card" key={order.id}>
                   <h3>Order #{order.id.slice(0, 6)}</h3>
-                  <p><strong>Student ID:</strong> {order.studentId}</p>
-
-                  {/* Dropdown used to move an order through the allowed status flow */}
-                  <p><strong>Status:</strong></p>
-
+  
+                  <p>
+                    <strong>Student ID:</strong> {order.studentId}
+                  </p>
+  
+                  <p>
+                    <strong>Status:</strong>
+                  </p>
+  
                   <select
                     value={order.status}
                     onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                    style={{
-                      padding: "6px",
-                      borderRadius: "6px",
-                      marginTop: "5px"
-                    }}
+                    className="order-status-select"
                   >
                     {ORDER_STATUS_FLOW.map((statusOption) => (
                       <option
                         key={statusOption}
                         value={statusOption}
                         disabled={
-                          // Prevent vendors from moving an order backwards in the workflow
                           ORDER_STATUS_FLOW.indexOf(statusOption) <
                           ORDER_STATUS_FLOW.indexOf(order.status)
                         }
@@ -622,18 +460,17 @@ export default function VendorDashboard() {
                       </option>
                     ))}
                   </select>
-
-                  <p><strong>Total:</strong> R{order.total.toFixed(2)}</p>
-
-                  {/* Show each item inside the order */}
-                  <div style={{ marginTop: "1rem", textAlign: "left" }}>
+  
+                  <p>
+                    <strong>Total:</strong> R{order.total.toFixed(2)}
+                  </p>
+  
+                  <div className="order-items">
                     <strong>Items:</strong>
                     {order.items.map((item, index) => (
-                      <div key={index} style={{ marginTop: "0.5rem" }}>
-                        <p>
-                          {item.name} - {item.price} x {item.quantity}
-                        </p>
-                      </div>
+                      <p key={index}>
+                        {item.name} - {item.price} x {item.quantity}
+                      </p>
                     ))}
                   </div>
                 </div>
@@ -641,8 +478,174 @@ export default function VendorDashboard() {
             </div>
           )}
         </section>
+  
+        {/* BOTTOM SECTION: Form and Menu side by side */}
+        <div className="dashboard-grid">
+          {/* LEFT: Add/Edit Menu Form */}
+          <section className="form-section">
+            <h2>{editingItemId !== null ? "Edit Menu Item" : "Add Menu Item"}</h2>
+  
+            <form
+              className="menu-form"
+              onSubmit={handleSubmit}
+              onPaste={handleImagePaste}
+            >
+              <input
+                type="text"
+                name="name"
+                placeholder="Item name"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
+  
+              <textarea
+                name="description"
+                placeholder="Item description"
+                value={formData.description}
+                onChange={handleInputChange}
+              ></textarea>
+  
+              <input
+                type="text"
+                name="price"
+                placeholder="Price e.g. R65.00"
+                value={formData.price}
+                onChange={handleInputChange}
+              />
+  
+              <input
+                type="number"
+                name="stock"
+                placeholder="Stock quantity"
+                value={formData.stock}
+                onChange={handleInputChange}
+                min="0"
+              />
+  
+              <input
+                type="text"
+                name="photoUrl"
+                placeholder="Photo URL"
+                value={formData.photoUrl}
+                onChange={handleInputChange}
+              />
+  
+              {imagePreview && (
+                <div style={{ marginTop: "10px", textAlign: "center" }}>
+                  <p>Image preview:</p>
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    style={{
+                      width: "160px",
+                      height: "120px",
+                      objectFit: "cover",
+                      borderRadius: "10px",
+                    }}
+                  />
+                </div>
+              )}
+  
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  name="available"
+                  checked={formData.available}
+                  onChange={handleInputChange}
+                />
+                Available
+              </label>
+  
+              <div className="form-buttons">
+                <button type="submit">
+                  {editingItemId !== null ? "Update Item" : "Add Item"}
+                </button>
+  
+                {editingItemId !== null && (
+                  <button
+                    type="button"
+                    className="cancel-btn"
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+            </form>
+          </section>
+  
+          {/* RIGHT: Current Menu */}
+          <section className="menu-section">
+            <h2>Current Menu</h2>
+  
+            <div className="menu-list">
+              {menuItems.map((item) => (
+                <div className="menu-card" key={item.id}>
+                  {item.photoUrl ? (
+                    <img
+                      src={item.photoUrl}
+                      alt={item.name}
+                      className="menu-image"
+                    />
+                  ) : (
+                    <div className="menu-image-placeholder">
+                      Image not available yet
+                    </div>
+                  )}
+  
+                  <h3>{item.name}</h3>
+                  <p>{item.description}</p>
+                  <p className="price">{item.price}</p>
+  
+                  <p>
+                    <strong>Stock:</strong> {item.stock ?? 0}
+                  </p>
+  
+                  <p
+                    className={
+                      (item.stock ?? 0) > 0
+                        ? "status available"
+                        : "status sold-out"
+                    }
+                  >
+                    {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
+                  </p>
+  
+                  <div className="button-row">
+                    <button
+                      className="edit-btn"
+                      type="button"
+                      onClick={() => handleEditClick(item)}
+                    >
+                      Edit
+                    </button>
+  
+                    <button
+                      className="soldout-btn"
+                      type="button"
+                      onClick={() => toggleAvailability(item.id)}
+                    >
+                      {(item.stock ?? 0) > 0
+                        ? "Mark as Sold Out"
+                        : "Mark as Available"}
+                    </button>
+  
+                    <button
+                      className="delete-btn"
+                      type="button"
+                      onClick={() => handleDeleteItem(item.id, item.name)}
+                      style={{ backgroundColor: "#e74c3c", color: "white" }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
       </main>
-
+  
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <LogoutButton />
       </div>
