@@ -32,6 +32,10 @@ export default function VendorDashboard() {
   // Stores all orders that belong to the logged-in vendor
   const [vendorOrders, setVendorOrders] = useState([]);
 
+  // Stores a preview of the image pasted into the form.
+  // This does not save anything yet; it only helps us test the paste feature safely.
+  const [imagePreview, setImagePreview] = useState("");
+
   // Stores the current values entered in the menu item form
   // stock keeps track of how many units of the item are available
   const [formData, setFormData] = useState({
@@ -154,6 +158,51 @@ export default function VendorDashboard() {
     }
   };
 
+  // Handles when a user pastes an image (Cmd+V / Ctrl+V)
+  // Converts the image into base64 and stores it for preview
+  const handleImagePaste = (event) => {
+    const items = event.clipboardData.items;
+  
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+  
+      if (item.type.includes("image")) {
+        const file = item.getAsFile();
+        const reader = new FileReader();
+  
+        reader.onload = (e) => {
+          const img = new Image();
+  
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+  
+            // Resize pasted image so Firestore can store it safely
+            canvas.width = 400;
+            canvas.height = 300;
+  
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  
+            // Compress image into smaller JPEG base64
+            const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+  
+            setImagePreview(compressedBase64);
+  
+            setFormData((previousFormData) => ({
+              ...previousFormData,
+              photoUrl: compressedBase64,
+            }));
+          };
+  
+          img.src = e.target.result;
+        };
+  
+        reader.readAsDataURL(file);
+        return;
+      }
+    }
+  };
+
   // Handles all form input changes
   // Converts checkboxes to booleans and number inputs to numbers
   const handleInputChange = (event) => {
@@ -210,7 +259,7 @@ export default function VendorDashboard() {
         name: trimmedName,
         description: trimmedDescription,
         price: trimmedPrice,
-        photoUrl: formData.photoUrl,
+        photoUrl: imagePreview || formData.photoUrl,
         stock: formData.stock,
         available: formData.stock > 0,
       };
@@ -241,7 +290,7 @@ export default function VendorDashboard() {
         name: trimmedName,
         description: trimmedDescription,
         price: trimmedPrice,
-        photoUrl: formData.photoUrl,
+        photoUrl: imagePreview || formData.photoUrl,
         stock: formData.stock,
         available: formData.stock > 0,
       };
@@ -267,6 +316,7 @@ export default function VendorDashboard() {
       stock: 1,
       available: true,
     });
+    setImagePreview("");
   };
 
   // Toggle stock-based availability
@@ -312,7 +362,9 @@ export default function VendorDashboard() {
       stock: item.stock ?? 1,
       available: item.available,
     });
-
+  
+    setImagePreview(item.photoUrl || "");
+  
     setEditingItemId(item.id);
   };
 
@@ -354,7 +406,7 @@ export default function VendorDashboard() {
         <section className="form-section">
           <h2>{editingItemId !== null ? "Edit Menu Item" : "Add Menu Item"}</h2>
 
-          <form className="menu-form" onSubmit={handleSubmit}>
+          <form className="menu-form" onSubmit={handleSubmit} onPaste={handleImagePaste}>
             <input
               type="text"
               name="name"
@@ -394,6 +446,23 @@ export default function VendorDashboard() {
               value={formData.photoUrl}
               onChange={handleInputChange}
             />
+
+            {/* Shows a preview when an image is pasted into the form */}
+            {imagePreview && (
+              <div style={{ marginTop: "10px", textAlign: "center" }}>
+                <p>Image preview:</p>
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  style={{
+                    width: "160px",
+                    height: "120px",
+                    objectFit: "cover",
+                    borderRadius: "10px",
+                  }}
+                />
+              </div>
+            )}
 
             <label className="checkbox-row">
               <input
