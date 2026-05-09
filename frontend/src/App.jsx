@@ -11,6 +11,8 @@ import VendorRegistrationForm from "./components/VendorRegistration/VendorRegist
 import AdminVendorReview from "./components/VendorReview/AdminVendorReview";
 import Layout from "./components/Layout";
 import OrderTracking from "./pages/OrderTracking";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import StudentAnalytics from "./pages/StudentAnalytics";
 
 export default function App() {
   return (
@@ -25,6 +27,15 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["student"]}>
               <StudentHome />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/analytics"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <StudentAnalytics />
             </ProtectedRoute>
           }
         />
@@ -45,6 +56,15 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["vendor"]}>
               <VendorDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/vendor/analytics"
+          element={
+            <ProtectedRoute allowedRoles={["vendor"]}>
+              <AnalyticsDashboard />
             </ProtectedRoute>
           }
         />
