@@ -16,6 +16,13 @@ class NotificationService {
     this.adminTemplateId = import.meta.env.VITE_EMAILJS_ADMIN_TEMPLATE_ID;
     this.publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
     this.adminEmail = import.meta.env.VITE_ADMIN_NOTIFICATION_EMAIL;
+
+    console.log("EMAILJS ENV DEBUG:", {
+    serviceId: this.serviceId,
+    templateId: this.orderReadyTemplateId,
+    publicKey: this.publicKey,
+    adminEmail: this.adminEmail
+  });
   }
 
   async logNotification(notificationData) {

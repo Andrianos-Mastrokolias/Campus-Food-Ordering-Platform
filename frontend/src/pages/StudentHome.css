@@ -274,3 +274,56 @@
     flex-direction: column;
   }
 }
+
+/* ------------------------------------------------------ */
+/* REALTIME ORDER READY NOTIFICATION POPUP                */
+/* ------------------------------------------------------ */
+/* Floating popup shown when vendor marks an order        */
+/* as ready for collection.                               */
+/* ------------------------------------------------------ */
+
+.ready-popup {
+
+  /* Fixed positioning keeps popup visible while browsing */
+  position: fixed;
+
+  top: 25px;
+  right: 25px;
+
+  /* Professional green success styling */
+  background: #1f7a1f;
+  color: white;
+
+  padding: 16px 22px;
+
+  border-radius: 12px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  /* Soft shadow for modern UI appearance */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+
+  /* Ensures popup appears above all UI elements */
+  z-index: 9999;
+
+  /* Smooth popup entrance animation */
+  animation: slideIn 0.3s ease;
+}
+
+/* ------------------------------------------------------ */
+/* Popup slide-in animation                               */
+/* ------------------------------------------------------ */
+
+@keyframes slideIn {
+
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
