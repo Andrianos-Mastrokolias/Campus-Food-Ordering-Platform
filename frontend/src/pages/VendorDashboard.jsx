@@ -155,6 +155,9 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
     // US3: trigger mocked email notification when the vendor marks an order as ready.
     if (newStatus === "ready" && selectedOrder) {
+      //DEBUG: CHECK IF THIS BLOCK IS REACHED
+      console.log("🚀 EMAIL TRIGGER HIT");
+      console.log("Order being sent:", selectedOrder);
   try {
     await notificationService.sendOrderReadyEmail({
       ...selectedOrder,

@@ -2,7 +2,26 @@ import LogoutButton from "../components/LogoutButton";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react"; // useEffect fetches live menu items when the page loads
-import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore"; // Firestore functions for reading menu items
+// ------------------------------------------------------
+// Firestore imports
+// ------------------------------------------------------
+// collection       -> reference Firestore collections
+// getDocs          -> fetch menu items
+// addDoc           -> create new order documents
+// serverTimestamp  -> store accurate server-side timestamps
+// query/where      -> filter orders for logged-in student
+// onSnapshot       -> realtime Firestore listener
+// ------------------------------------------------------
+import {
+  collection,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  query,
+  where,
+  onSnapshot
+} from "firebase/firestore";
+
 import { db } from "../firebase"; // shared Firestore database connection
 import { Link } from "react-router-dom";
 import "./StudentHome.css";
@@ -21,6 +40,21 @@ export default function StudentHome() {
 
   // Controls the temporary checkout success message
   const [orderPlaced, setOrderPlaced] = useState(false);
+  // ------------------------------------------------------
+// TRACK ORDERS THAT ALREADY SHOWED NOTIFICATIONS
+// ------------------------------------------------------
+// Prevents duplicate popup notifications from appearing
+// repeatedly while Firestore listener continues running.
+// ------------------------------------------------------
+const [notifiedOrders, setNotifiedOrders] = useState([]);
+
+// ------------------------------------------------------
+// CURRENT LIVE ORDER NOTIFICATION MESSAGE
+// ------------------------------------------------------
+// Stores the popup text shown when an order becomes ready.
+// null = no popup currently visible.
+// ------------------------------------------------------
+const [readyNotification, setReadyNotification] = useState(null);
 
   
 
@@ -50,8 +84,93 @@ export default function StudentHome() {
     fetchMenuItems();
   }, []);
 
+  // ------------------------------------------------------
+// REALTIME ORDER STATUS LISTENER
+// ------------------------------------------------------
+// This listener continuously watches the logged-in
+// student's orders inside Firestore.
+//
+// Whenever a vendor updates an order status to "ready",
+// the student immediately receives an in-app popup
+// notification without refreshing the page.
+//
+// Supports User Story 2:
+// "As a student, I want to receive an in-app
+// notification when my order is ready."
+// ------------------------------------------------------
+useEffect(() => {
+
+  // Stop execution if user is not logged in yet
+  if (!user) return;
+
+  // Reference Firestore orders collection
+  const ordersRef = collection(db, "orders");
+
+  // Query only orders belonging to current student
+  const ordersQuery = query(
+    ordersRef,
+    where("studentId", "==", user.uid)
+  );
+
+  // ------------------------------------------------------
+  // Create realtime Firestore listener
+  // ------------------------------------------------------
+  // onSnapshot automatically triggers whenever matching
+  // Firestore documents are added or updated.
+  // ------------------------------------------------------
+  const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+
+    snapshot.docs.forEach((doc) => {
+
+      // Convert Firestore document into usable object
+      const order = {
+        id: doc.id,
+        ...doc.data()
+      };
+
+      // Check whether this order already triggered
+      // a popup notification previously
+      const alreadyNotified = notifiedOrders.includes(order.id);
+
+      // ------------------------------------------------------
+      // SHOW POPUP WHEN ORDER STATUS BECOMES "READY"
+      // ------------------------------------------------------
+      if (
+        order.status === "ready" &&
+        !alreadyNotified
+      ) {
+
+        // Display realtime popup notification
+        setReadyNotification(
+          `✅ Order #${order.id.slice(0, 6)} is ready for collection!`
+        );
+
+        // Store order ID to prevent duplicate popups
+        setNotifiedOrders((previousOrders) => [
+          ...previousOrders,
+          order.id
+        ]);
+
+        // Automatically hide popup after 5 seconds
+        setTimeout(() => {
+          setReadyNotification(null);
+        }, 5000);
+      }
+    });
+  });
+
+  // ------------------------------------------------------
+  // Cleanup realtime listener
+  // ------------------------------------------------------
+  // Prevents memory leaks and duplicate listeners when
+  // component rerenders or unmounts.
+  // ------------------------------------------------------
+  return () => unsubscribe();
+
+}, [user, notifiedOrders]);
+
   // Calculate total cart price
-  // Prices are stored like "R65.00", so remove "R" before converting to number
+// Prices are stored like "R65.00", so remove "R" before converting to number
   const total = cart.reduce(
     (sum, item) => sum + Number(String(item.price).replace("R", "")),
     0
@@ -144,6 +263,17 @@ const handleCheckout = async () => {
 
   return (
     <div className="student-home">
+      {/* ------------------------------------------------------ */}
+      {/* LIVE ORDER READY NOTIFICATION POPUP                  */}
+      {/* ------------------------------------------------------ */}
+      {/* This popup appears instantly when a vendor updates   */}
+      {/* the student's order status to "ready".               */}
+      {/* ------------------------------------------------------ */}
+      {readyNotification && (
+        <div className="ready-popup">
+          {readyNotification}
+        </div>
+      )}
       <div className="welcome-section">
         <h1>Student Dashboard</h1>
         <p className="subtitle">Browse food items currently available on the platform.</p>
@@ -310,21 +440,7 @@ const handleCheckout = async () => {
               </div>
             </div>
 
-              {orderPlaced && (
-                <div style={{
-                  position: "fixed",
-                  top: "20px",
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  background: "green",
-                  color: "white",
-                  padding: "20px",
-                  zIndex: 99999,
-                  fontSize: "20px"
-                }}>
-                  ORDER SUCCESS TEST 🔥
-                </div>
-              )}
+              
           </>
         )}
       </section>
