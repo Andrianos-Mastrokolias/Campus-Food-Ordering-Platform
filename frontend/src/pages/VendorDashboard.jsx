@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
 import "../App.css";
+import { Link } from "react-router-dom";
 
 // ------------------------------------------------------
 // ORDER STATUS FLOW
@@ -438,6 +439,18 @@ export default function VendorDashboard() {
             "Manage your food items, prices, descriptions, and availability."}
         </p>
       </header>
+      
+      <div
+          className="analytics-btn-container"
+          style={{ textAlign: "center" }}
+        >
+          <Link to="/vendor/analytics">
+            <button type="button" className="analytics-dashboard-btn">
+              📈 View Analytics 
+            </button>
+          </Link>
+        </div>
+
   
       <main className="vendor-dashboard-layout">
         {/* TOP SECTION: Incoming Orders */}

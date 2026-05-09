@@ -6,7 +6,8 @@ import { collection, getDocs, addDoc, serverTimestamp } from "firebase/firestore
 import { db } from "../firebase"; // shared Firestore database connection
 import { Link } from "react-router-dom";
 import "./StudentHome.css";
-import { useNavigate } from "react-router-dom";   
+import { useNavigate } from "react-router-dom";  
+
 
 export default function StudentHome() {
   const { cart, addToCart, clearCart, removeFromCart } = useCart();
@@ -145,8 +146,16 @@ const handleCheckout = async () => {
       <div className="welcome-section">
         <h1>Student Dashboard</h1>
         <p className="subtitle">Browse food items currently available on the platform.</p>
-      </div>
 
+        <div className="analytics-btn-container">
+          <Link to="/student/analytics">
+            <button type="button" className="analytics-dashboard-btn">
+              📊 View My Analytics
+            </button>
+          </Link>
+        </div>
+      </div>
+      
       {orderPlaced && (
         <div className="success-message">
 
