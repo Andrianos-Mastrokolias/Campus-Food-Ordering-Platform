@@ -265,37 +265,38 @@ Then I should be denied access
 ---
 
 # Sprint 3
+
 # Acceptance Tests for US1: Vendor detail change request
 
 ## Test 1.1 – Vendor submits detail change request
 
-Given an approved vendor is logged in  
-When the vendor submits updated shop details  
+Given an approved vendor is logged in
+When the vendor submits updated shop details
 Then a vendor detail change request is stored in Firestore.
 
 ---
 
 ## Test 1.2 – Admin reviews detail change request
 
-Given a vendor detail change request exists  
-When the admin opens the detail requests dashboard  
+Given a vendor detail change request exists
+When the admin opens the detail requests dashboard
 Then the request is displayed with current and requested vendor details.
 
 ---
 
 ## Test 1.3 – Admin approves detail change request
 
-Given a pending vendor detail request exists  
-When the admin approves the request  
-Then the vendor profile is updated with the requested changes.
+Given a pending vendor detail request exists
+When the admin approves the request
+Then the request status changes to approved and the vendor profile is updated.
 
 ---
 
 ## Test 1.4 – Admin rejects detail change request
 
-Given a pending vendor detail request exists  
-When the admin rejects the request  
-Then the vendor profile remains unchanged.
+Given a pending vendor detail request exists
+When the admin rejects the request
+Then the request status changes to rejected and the vendor profile remains unchanged.
 
 ---
 
@@ -303,50 +304,50 @@ Then the vendor profile remains unchanged.
 
 ## Test 2.1 – Notification created when order is ready
 
-Given a student has placed an order  
-When the vendor changes the order status to "Ready"  
+Given a student has placed an order
+When the vendor changes the order status to "Ready"
 Then an in-app notification is created for the student.
 
 ---
 
 ## Test 2.2 – Student views notification
 
-Given a student has an unread order notification  
-When the student opens the student dashboard or notifications area  
+Given a student has an unread order notification
+When the student opens the student dashboard or notifications area
 Then the notification is displayed to the student.
 
 ---
 
 ## Test 2.3 – Notifications linked to correct order
 
-Given multiple orders exist  
-When notifications are generated  
+Given multiple orders exist
+When notifications are generated
 Then each notification is linked to the correct student order.
 
 ---
 
-# Acceptance Tests for US3: Email/SMS notification
+# Acceptance Tests for US3: Email notification
 
 ## Test 3.1 – Student receives order-ready email
 
-Given a student has placed an order  
-When the vendor changes the order status to "Ready"  
+Given a student has placed an order
+When the vendor changes the order status to "Ready"
 Then the student receives an email notification confirming the order is ready.
 
 ---
 
 ## Test 3.2 – Notification log is stored
 
-Given an email notification is sent  
-When the notification process completes  
+Given an email notification is sent
+When the notification process completes
 Then a notification log is stored in Firestore.
 
 ---
 
 ## Test 3.3 – Order status still updates if email fails
 
-Given the email service is unavailable  
-When the vendor marks the order as "Ready"  
+Given the email service is unavailable
+When the vendor marks the order as "Ready"
 Then the order status still updates successfully.
 
 ---
@@ -355,33 +356,33 @@ Then the order status still updates successfully.
 
 ## Test 4.1 – Admin receives vendor detail request notification
 
-Given a vendor submits a detail change request  
-When the request is created  
+Given a vendor submits a detail change request
+When the request is created
 Then the admin receives an email notification.
 
 ---
 
 ## Test 4.2 – Admin dashboard displays pending requests
 
-Given pending vendor detail requests exist  
-When the admin opens the detail requests page  
+Given pending vendor detail requests exist
+When the admin opens the detail requests page
 Then all pending requests are displayed.
 
 ---
 
 ## Test 4.3 – Admin approves request
 
-Given a pending vendor detail request exists  
-When the admin approves the request  
-Then the request status changes to approved.
+Given a pending vendor detail request exists
+When the admin approves the request
+Then the request status changes to approved and the vendor profile is updated.
 
 ---
 
 ## Test 4.4 – Admin rejects request
 
-Given a pending vendor detail request exists  
-When the admin rejects the request  
-Then the request status changes to rejected.
+Given a pending vendor detail request exists
+When the admin rejects the request
+Then the request status changes to rejected and the vendor profile remains unchanged.
 
 ---
 
@@ -389,32 +390,32 @@ Then the request status changes to rejected.
 
 ## Test 5.1 – Student selects payment option
 
-Given a student is checking out an order  
-When the checkout page is displayed  
+Given a student is checking out an order
+When the checkout page is displayed
 Then the student can choose a payment option.
 
 ---
 
 ## Test 5.2 – Payment status stored
 
-Given a payment is processed or mocked  
-When the payment completes  
+Given a payment is processed or mocked
+When the payment completes
 Then the payment status is stored in Firestore.
 
 ---
 
 ## Test 5.3 – Successful payment completes order
 
-Given a payment succeeds  
-When the transaction completes  
+Given a payment succeeds
+When the transaction completes
 Then the order is marked as paid.
 
 ---
 
 ## Test 5.4 – Failed payment does not complete order
 
-Given a payment fails  
-When the transaction is unsuccessful  
+Given a payment fails
+When the transaction is unsuccessful
 Then the order remains unpaid.
 
 ---
@@ -423,22 +424,23 @@ Then the order remains unpaid.
 
 ## Test 6.1 – Vendor views order analytics
 
-Given vendor orders exist  
-When the vendor opens the analytics dashboard  
+Given vendor orders exist
+When the vendor opens the analytics dashboard
 Then total orders, revenue, and best-selling items are displayed.
 
 ---
 
 ## Test 6.2 – Student views order insights
 
-Given a student has previous orders  
-When the student opens the analytics page  
+Given a student has previous orders
+When the student opens the analytics page
 Then spending summaries and recent orders are displayed.
 
 ---
 
 ## Test 6.3 – Analytics displayed visually
 
-Given analytics data exists  
-When the analytics pages load  
+Given analytics data exists
+When the analytics pages load
 Then charts or cards are displayed for the analytics data.
+
