@@ -140,10 +140,9 @@ export default function VendorDashboard() {
     fetchVendorOrders();
   }, [user, role, loading]);
 
-  // Update the status of a specific order in Firestore
-  // This allows the vendor to move the order through the workflow
-  // Update the status of a specific order in Firestore.
-// If the order becomes ready, create a mocked email notification for the student.
+
+// Updates an order status in Firestore.
+// If the order becomes ready, a real EmailJS notification is sent to the student.
 const updateOrderStatus = async (orderId, newStatus) => {
   try {
     const orderRef = doc(db, "orders", orderId);
@@ -153,20 +152,18 @@ const updateOrderStatus = async (orderId, newStatus) => {
       status: newStatus,
     });
 
-    // US3: trigger mocked email notification when the vendor marks an order as ready.
+    // US3: trigger real EmailJS notification when the vendor marks an order as ready.
+    // Email failure is handled separately so the order status still updates successfully.
     if (newStatus === "ready" && selectedOrder) {
-      //DEBUG: CHECK IF THIS BLOCK IS REACHED
-      console.log("🚀 EMAIL TRIGGER HIT");
-      console.log("Order being sent:", selectedOrder);
-  try {
-    await notificationService.sendOrderReadyEmail({
-      ...selectedOrder,
-      status: newStatus,
-    });
-  } catch (emailError) {
-    console.error("Order status updated, but email notification failed:", emailError);
-  }
-}
+      try {
+        await notificationService.sendOrderReadyEmail({
+          ...selectedOrder,
+          status: newStatus,
+        });
+      } catch (emailError) {
+        console.error("Order status updated, but email notification failed:", emailError);
+      }
+    }
 
     setVendorOrders((prevOrders) =>
       prevOrders.map((order) =>
