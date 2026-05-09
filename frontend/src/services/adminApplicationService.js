@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 
 import { db } from "../firebase";
+import notificationService from './notificationService';
 
 /**
  * Handles admin access applications and the admin approval workflow.
@@ -25,6 +26,7 @@ class AdminApplicationService {
   /**
    * Submits a new admin access request.
    * Prevents duplicate pending requests for the same user.
+   * Also sends an admin email notification using EmailJS.
    */
   async submitApplication(userId, userEmail, userName, currentRole, reason) {
     try {
@@ -49,6 +51,21 @@ class AdminApplicationService {
       };
 
       const docRef = await addDoc(collection(db, this.collectionName), applicationData);
+
+      // Notify admin that a new admin access request has been submitted.
+      // Email failure should not block the request from being created.
+      try {
+        await notificationService.sendAdminAccessRequestEmail({
+          id: docRef.id,
+          name: applicationData.userName,
+          userName: applicationData.userName,
+          email: applicationData.userEmail,
+          currentRole: applicationData.currentRole
+        });
+      } catch (emailError) {
+        console.error('Admin application was submitted, but admin email failed:', emailError);
+      }
+
       return docRef.id;
     } catch (error) {
       console.error('Error submitting application:', error);
