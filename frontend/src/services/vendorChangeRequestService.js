@@ -38,10 +38,15 @@ class VendorChangeRequestService {
 
     const docRef = await addDoc(collection(db, this.collectionName), requestData);
 
-    await notificationService.sendAdminVendorChangeRequestEmail({
-      id: docRef.id,
-      ...requestData
-    });
+    // Send admin email, but do not block the request if EmailJS fails.
+    try {
+      await notificationService.sendAdminVendorChangeRequestEmail({
+        id: docRef.id,
+        ...requestData
+      });
+    } catch (emailError) {
+      console.error('Vendor detail request was saved, but admin email failed:', emailError);
+    }
 
     return docRef.id;
   }
@@ -72,24 +77,24 @@ class VendorChangeRequestService {
   }
 
   async getVendorRequests(vendorId) {
-  const q = query(
-    collection(db, this.collectionName),
-    where('vendorId', '==', vendorId)
-  );
+    const q = query(
+      collection(db, this.collectionName),
+      where('vendorId', '==', vendorId)
+    );
 
-  const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(q);
 
-  return querySnapshot.docs
-    .map((documentSnapshot) => ({
-      id: documentSnapshot.id,
-      ...documentSnapshot.data()
-    }))
-    .sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-      return dateB - dateA;
-    });
-}
+    return querySnapshot.docs
+      .map((documentSnapshot) => ({
+        id: documentSnapshot.id,
+        ...documentSnapshot.data()
+      }))
+      .sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        return dateB - dateA;
+      });
+  }
 
   async approveRequest(requestId, reviewerId, reviewNotes = '') {
     const requestRef = doc(db, this.collectionName, requestId);
