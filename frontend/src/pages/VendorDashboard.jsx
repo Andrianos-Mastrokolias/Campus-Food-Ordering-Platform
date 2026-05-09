@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
 import "../App.css";
 import { Link } from "react-router-dom";
-
+import notificationService from "../services/notificationService";
 // ------------------------------------------------------
 // ORDER STATUS FLOW
 // This defines the valid order status progression.
@@ -142,28 +142,40 @@ export default function VendorDashboard() {
 
   // Update the status of a specific order in Firestore
   // This allows the vendor to move the order through the workflow
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      // Reference the specific order document in Firestore
-      const orderRef = doc(db, "orders", orderId);
+  // Update the status of a specific order in Firestore.
+// If the order becomes ready, create a mocked email notification for the student.
+const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const orderRef = doc(db, "orders", orderId);
+    const selectedOrder = vendorOrders.find((order) => order.id === orderId);
 
-      // Update only the status field
-      await updateDoc(orderRef, {
-        status: newStatus,
-      });
+    await updateDoc(orderRef, {
+      status: newStatus,
+    });
 
-      // Update local UI state instantly without needing a page refresh
-      setVendorOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId
-            ? { ...order, status: newStatus }
-            : order
-        )
-      );
-    } catch (error) {
-      console.error("Error updating order status:", error.message);
-    }
-  };
+    // US3: trigger mocked email notification when the vendor marks an order as ready.
+    if (newStatus === "ready" && selectedOrder) {
+  try {
+    await notificationService.sendOrderReadyEmail({
+      ...selectedOrder,
+      status: newStatus,
+    });
+  } catch (emailError) {
+    console.error("Order status updated, but email notification failed:", emailError);
+  }
+}
+
+    setVendorOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId
+          ? { ...order, status: newStatus }
+          : order
+      )
+    );
+  } catch (error) {
+    console.error("Error updating order status:", error.message);
+  }
+};
 
   // Handles when a user pastes an image (Cmd+V / Ctrl+V)
   // Converts the image into base64 and stores it for preview

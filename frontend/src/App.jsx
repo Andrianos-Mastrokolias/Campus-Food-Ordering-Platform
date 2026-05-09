@@ -9,10 +9,12 @@ import AdminApplicationForm from "./components/AdminApplication/AdminApplication
 import AdminReviewDashboard from "./components/AdminApplication/AdminReviewDashboard";
 import VendorRegistrationForm from "./components/VendorRegistration/VendorRegistrationForm";
 import AdminVendorReview from "./components/VendorReview/AdminVendorReview";
-import Layout from "./components/Layout";
 import OrderTracking from "./pages/OrderTracking";
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import StudentAnalytics from "./pages/StudentAnalytics";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import VendorDetailChangeRequest from "./pages/VendorDetailChangeRequest/VendorDetailChangeRequest";
+import AdminVendorChangeRequests from "./pages/AdminVendorChangeRequests/AdminVendorChangeRequests";
+import Layout from "./components/Layout";
 
 export default function App() {
   return (
@@ -32,21 +34,19 @@ export default function App() {
         />
 
         <Route
-          path="/student/analytics"
-          element={
-            <ProtectedRoute allowedRoles={["student"]}>
-              <StudentAnalytics />
-            </ProtectedRoute>
-          }
-        />
-        {/* =========================
-    {/* Student order tracking page */}
-        {/* This allows students to view all their past and active orders */}
-        <Route
           path="/orders"
           element={
             <ProtectedRoute allowedRoles={["student"]}>
               <OrderTracking />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/analytics"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <StudentAnalytics />
             </ProtectedRoute>
           }
         />
@@ -69,7 +69,15 @@ export default function App() {
           }
         />
 
-        {/* Redirect the old admin dashboard route to the active admin applications page. */}
+        <Route
+          path="/vendor/change-request"
+          element={
+            <ProtectedRoute allowedRoles={["vendor"]}>
+              <VendorDetailChangeRequest />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/admin/dashboard"
           element={<Navigate to="/admin/applications" replace />}
@@ -107,6 +115,15 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <AdminVendorReview />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/vendor-change-requests"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <AdminVendorChangeRequests />
             </ProtectedRoute>
           }
         />

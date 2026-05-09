@@ -106,6 +106,7 @@ const handleCheckout = async () => {
       const orderData = {
         vendorId,                 // which vendor receives this order
         studentId: user.uid,      // who placed the order
+        studentEmail: user.email, // store email for easy reference 
         items: vendorItems,       // list of items
         total: orderTotal,        // total price
         status: "pending",       // initial order status

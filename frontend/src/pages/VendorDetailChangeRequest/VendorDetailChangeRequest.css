@@ -1,0 +1,100 @@
+.vendor-change-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.vendor-change-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.change-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.change-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.change-form input,
+.change-form textarea {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.change-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.change-form button {
+  border: none;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  background: #4f46e5;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.change-form button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.change-alert {
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin: 1rem 0;
+  font-weight: 600;
+}
+
+.change-alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.change-alert-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.request-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.request-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.request-row.pending {
+  border-left: 6px solid #f59e0b;
+}
+
+.request-row.approved {
+  border-left: 6px solid #22c55e;
+}
+
+.request-row.rejected {
+  border-left: 6px solid #ef4444;
+}
+
+.request-status {
+  text-transform: uppercase;
+  font-weight: 800;
+}

@@ -11,6 +11,7 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase.jsx';
+import notificationService from './notificationService';
 
 /**
  * Handles vendor application submission, review, and approval.
@@ -60,6 +61,7 @@ class VendorApplicationService {
   /**
    * Submits a new vendor application.
    * Prevents a user from submitting another application while one is still pending.
+   * Also sends an admin email notification using EmailJS.
    */
   async submitApplication(userId, userEmail, userName, businessData) {
     try {
@@ -89,6 +91,21 @@ class VendorApplicationService {
       };
 
       const docRef = await addDoc(collection(db, this.collectionName), applicationData);
+
+      // Notify admin that a new vendor application has been submitted.
+      // Email failure should not block the application from being created.
+      try {
+        await notificationService.sendAdminVendorApplicationEmail({
+          id: docRef.id,
+          businessName: applicationData.businessName,
+          vendorName: applicationData.userName,
+          email: applicationData.userEmail,
+          vendorEmail: applicationData.userEmail
+        });
+      } catch (emailError) {
+        console.error('Vendor application was submitted, but admin email failed:', emailError);
+      }
+
       return docRef.id;
     } catch (error) {
       console.error('Error submitting vendor application:', error);
