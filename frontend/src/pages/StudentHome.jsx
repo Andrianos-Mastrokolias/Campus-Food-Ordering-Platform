@@ -19,7 +19,8 @@ import {
   serverTimestamp,
   query,
   where,
-  onSnapshot
+  onSnapshot,
+  Timestamp
 } from "firebase/firestore";
 
 import { db } from "../firebase"; // shared Firestore database connection
@@ -55,6 +56,33 @@ const [notifiedOrders, setNotifiedOrders] = useState([]);
 // null = no popup currently visible.
 // ------------------------------------------------------
 const [readyNotification, setReadyNotification] = useState(null);
+
+// Generates a daily order number such as #001, #002, etc.
+// The count resets every new day.
+const generateDailyOrderNumber = async () => {
+  // Start of today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // End of today
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // Query all orders created today
+  const ordersQuery = query(
+    collection(db, "orders"),
+    where("createdAt", ">=", Timestamp.fromDate(today)),
+    where("createdAt", "<", Timestamp.fromDate(tomorrow))
+  );
+
+  const snapshot = await getDocs(ordersQuery);
+
+  // Next order number for today
+  const nextOrderNumber = snapshot.docs.length + 1;
+
+  // Format like #001
+  return `#${String(nextOrderNumber).padStart(3, "0")}`;
+};
 
   
 
@@ -222,13 +250,17 @@ const handleCheckout = async () => {
         return sum + Number(String(item.price).replace("R", ""));
       }, 0);
 
+      // Generate readable daily order number such as #001, #002, etc.
+      const dailyOrderNumber = await generateDailyOrderNumber();
+
       const orderData = {
         vendorId,                 // which vendor receives this order
         studentId: user.uid,      // who placed the order
-        studentEmail: user.email, // store email for easy reference 
+        studentEmail: user.email, // store email for easy reference
         items: vendorItems,       // list of items
         total: orderTotal,        // total price
         status: "pending",       // initial order status
+        dailyOrderNumber,         // readable order number for vendor dashboard
         createdAt: serverTimestamp(), // timestamp for sorting/tracking
       };
 

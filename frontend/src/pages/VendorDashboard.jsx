@@ -442,6 +442,31 @@ const updateOrderStatus = async (orderId, newStatus) => {
     return <p style={{ textAlign: "center", marginTop: "80px" }}>Loading...</p>;
   }
 
+  // Helper function to check whether an order was created today
+  const isToday = (timestamp) => {
+    if (!timestamp?.toDate) return false;
+
+    const orderDate = timestamp.toDate();
+    const today = new Date();
+
+    return (
+      orderDate.getFullYear() === today.getFullYear() &&
+      orderDate.getMonth() === today.getMonth() &&
+      orderDate.getDate() === today.getDate()
+    );
+  };
+
+  // Active orders show at the top
+  const activeOrders = vendorOrders.filter(
+    (order) => order.status !== "completed"
+  );
+
+  // Completed orders only show if they were created today.
+  // Older completed orders are hidden from the vendor dashboard.
+  const completedOrders = vendorOrders.filter(
+    (order) => order.status === "completed" && isToday(order.createdAt)
+  );
+
   return (
     <div className="app">
       <header className="header">
@@ -467,24 +492,33 @@ const updateOrderStatus = async (orderId, newStatus) => {
       <main className="vendor-dashboard-layout">
         {/* TOP SECTION: Incoming Orders */}
         <section className="orders-section">
-          <h2>Incoming Orders</h2>
-  
-          {vendorOrders.length === 0 ? (
-            <p>No orders yet.</p>
+          <div className="orders-header">
+            <div>
+              <h2>Incoming Orders</h2>
+              <p>Manage and update student orders</p>
+            </div>
+
+            <span className="order-count">{activeOrders.length} active</span>
+          </div>
+
+          {activeOrders.length === 0 ? (
+            <p>No active orders right now.</p>
           ) : (
             <div className="orders-row">
-              {vendorOrders.map((order) => (
+              {activeOrders.map((order) => (
                 <div className="order-card" key={order.id}>
-                  <h3>Order #{order.id.slice(0, 6)}</h3>
-  
-                  <p>
-                    <strong>Student ID:</strong> {order.studentId}
+                  <div className="order-card-top">
+                    <h3>Order {order.dailyOrderNumber || `#${order.id.slice(0, 6)}`}</h3>
+                    <span className={`order-status-label status-${order.status}`}>
+                      {order.status}
+                    </span>
+                  </div>
+
+                  <p className="order-info">
+                    <strong>Student:</strong> #{order.studentId.slice(0, 6)}
                   </p>
-  
-                  <p>
-                    <strong>Status:</strong>
-                  </p>
-  
+
+                  <label className="order-label">Update Status</label>
                   <select
                     value={order.status}
                     onChange={(e) => updateOrderStatus(order.id, e.target.value)}
@@ -503,21 +537,60 @@ const updateOrderStatus = async (orderId, newStatus) => {
                       </option>
                     ))}
                   </select>
-  
-                  <p>
-                    <strong>Total:</strong> R{order.total.toFixed(2)}
+
+                  <p className="order-total">
+                    Total: R{order.total.toFixed(2)}
                   </p>
-  
+
                   <div className="order-items">
-                    <strong>Items:</strong>
+                    <strong>Items</strong>
                     {order.items.map((item, index) => (
                       <p key={index}>
-                        {item.name} - {item.price} x {item.quantity}
+                        {item.name} × {item.quantity}
                       </p>
                     ))}
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* COMPLETED ORDERS */}
+          {completedOrders.length > 0 && (
+            <div className="completed-orders-section">
+              <h3>Completed Orders</h3>
+
+              <div className="orders-row">
+                {completedOrders.map((order) => (
+                  <div className="order-card completed-order-card" key={order.id}>
+                    <div className="order-card-top">
+                      <h3>Order {order.dailyOrderNumber || `#${order.id.slice(0, 6)}`}</h3>
+
+                      <span className="order-status-label status-completed">
+                        COMPLETED
+                      </span>
+                    </div>
+
+                    <p className="order-info">
+                      <strong>Student:</strong> #{order.studentId.slice(0, 6)}
+                    </p>
+
+                    <p className="order-total">
+                      Total: R{order.total.toFixed(2)}
+                    </p>
+
+                    <div className="order-items">
+                      <strong>Items</strong>
+
+                      {order.items.map((item, index) => (
+                        <p key={index}>
+                          {item.name} × {item.quantity}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
