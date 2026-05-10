@@ -63,6 +63,6 @@ As a student, I want to pay for my order using PaySnap/PayShip, so that I can co
 
 # US6: Vendor and student analytics
 
-As a vendor, I want to view analytics for orders and sales, so that I can understand how my menu is performing.
+As a vendor, I want to view analytics reports for orders and sales over time, so that I can monitor business performance and identify peak ordering periods.
 
-As a student, I want to see simple order insights, so that I can view my spending and order history.
+As a student, I want to view my order history and spending insights, so that I can track my purchases and ordering habits.
