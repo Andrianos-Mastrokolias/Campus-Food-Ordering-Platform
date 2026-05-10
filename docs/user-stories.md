@@ -31,9 +31,9 @@ Sprint 2:
 
 # Sprint 3
 
-# US1: Vendor detail change request
+# US1: Vendor menu and order management experience
 
-As a vendor, I want to request changes to my vendor details, so that my information stays updated but still requires admin approval.
+As a vendor, I want my menu items and customer orders to be displayed and managed in an organised way, so that students can easily browse my products and I can efficiently manage my business.
 
 ---
 
