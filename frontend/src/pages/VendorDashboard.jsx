@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
@@ -51,6 +62,18 @@ export default function VendorDashboard() {
   // Stores the ID of the item currently being edited
   // If null, the form is being used to add a new item
   const [editingItemId, setEditingItemId] = useState(null);
+
+  // Controls whether the vendor change request form is shown
+  const [showChangeRequestForm, setShowChangeRequestForm] = useState(false);
+
+  // Stores the vendor's requested updated business details
+  const [changeRequestData, setChangeRequestData] = useState({
+    businessName: "",
+    businessDescription: "",
+    businessPhone: "",
+    businessAddress: "",
+    businessType: "",
+  });
 
   // Controls whether the edit modal popup is visible
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
