@@ -1,41 +1,46 @@
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
+import { 
+  collection, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  getDoc, 
+  getDocs, 
+  query, 
+  where, 
   orderBy,
-  serverTimestamp
+  serverTimestamp 
 } from 'firebase/firestore';
-
-import { db } from "../firebase";
-import notificationService from './notificationService';
+import { db } from '../config/firebase';
 
 /**
- * Handles admin access applications and the admin approval workflow.
- * Approved users are promoted to the admin role and marked as approved.
+ * Admin Application Service
+ * Handles all admin role application operations
  */
 class AdminApplicationService {
+  
   constructor() {
     this.collectionName = 'adminApplications';
   }
 
   /**
-   * Submits a new admin access request.
-   * Prevents duplicate pending requests for the same user.
-   * Also sends an admin email notification using EmailJS.
+   * Submit a new admin role application
+   * @param {string} userId - ID of the user applying
+   * @param {string} userEmail - Email of the user
+   * @param {string} userName - Display name of the user
+   * @param {string} currentRole - Current role of the user
+   * @param {string} reason - Reason for wanting admin privileges
+   * @returns {Promise<string>} Application ID
    */
   async submitApplication(userId, userEmail, userName, currentRole, reason) {
     try {
+      // Check if user already has a pending application
       const existingApp = await this.getUserPendingApplication(userId);
-
+      
       if (existingApp) {
         throw new Error('You already have a pending application');
       }
 
+      // Create new application
       const applicationData = {
         userId,
         userEmail,
@@ -51,21 +56,6 @@ class AdminApplicationService {
       };
 
       const docRef = await addDoc(collection(db, this.collectionName), applicationData);
-
-      // Notify admin that a new admin access request has been submitted.
-      // Email failure should not block the request from being created.
-      try {
-        await notificationService.sendAdminAccessRequestEmail({
-          id: docRef.id,
-          name: applicationData.userName,
-          userName: applicationData.userName,
-          email: applicationData.userEmail,
-          currentRole: applicationData.currentRole
-        });
-      } catch (emailError) {
-        console.error('Admin application was submitted, but admin email failed:', emailError);
-      }
-
       return docRef.id;
     } catch (error) {
       console.error('Error submitting application:', error);
@@ -74,7 +64,8 @@ class AdminApplicationService {
   }
 
   /**
-   * Returns all pending admin applications for review.
+   * Get all pending applications (for admins)
+   * @returns {Promise<Array>} Array of pending applications
    */
   async getPendingApplications() {
     try {
@@ -87,10 +78,10 @@ class AdminApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((docSnapshot) => {
+      querySnapshot.forEach((doc) => {
         applications.push({
-          id: docSnapshot.id,
-          ...docSnapshot.data()
+          id: doc.id,
+          ...doc.data()
         });
       });
 
@@ -102,7 +93,8 @@ class AdminApplicationService {
   }
 
   /**
-   * Returns all admin applications.
+   * Get all applications (for admins)
+   * @returns {Promise<Array>} Array of all applications
    */
   async getAllApplications() {
     try {
@@ -114,10 +106,10 @@ class AdminApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((docSnapshot) => {
+      querySnapshot.forEach((doc) => {
         applications.push({
-          id: docSnapshot.id,
-          ...docSnapshot.data()
+          id: doc.id,
+          ...doc.data()
         });
       });
 
@@ -129,7 +121,9 @@ class AdminApplicationService {
   }
 
   /**
-   * Returns all admin applications submitted by a specific user.
+   * Get applications by user ID
+   * @param {string} userId - User ID
+   * @returns {Promise<Array>} Array of user's applications
    */
   async getUserApplications(userId) {
     try {
@@ -142,10 +136,10 @@ class AdminApplicationService {
       const querySnapshot = await getDocs(q);
       const applications = [];
 
-      querySnapshot.forEach((docSnapshot) => {
+      querySnapshot.forEach((doc) => {
         applications.push({
-          id: docSnapshot.id,
-          ...docSnapshot.data()
+          id: doc.id,
+          ...doc.data()
         });
       });
 
@@ -157,7 +151,9 @@ class AdminApplicationService {
   }
 
   /**
-   * Checks whether the user already has a pending admin request.
+   * Get user's pending application if exists
+   * @param {string} userId - User ID
+   * @returns {Promise<Object|null>} Pending application or null
    */
   async getUserPendingApplication(userId) {
     try {
@@ -168,15 +164,15 @@ class AdminApplicationService {
       );
 
       const querySnapshot = await getDocs(q);
-
+      
       if (querySnapshot.empty) {
         return null;
       }
 
-      const firstApplication = querySnapshot.docs[0];
+      const doc = querySnapshot.docs[0];
       return {
-        id: firstApplication.id,
-        ...firstApplication.data()
+        id: doc.id,
+        ...doc.data()
       };
     } catch (error) {
       console.error('Error checking pending application:', error);
@@ -185,9 +181,11 @@ class AdminApplicationService {
   }
 
   /**
-   * Approves an admin application.
-   * The user is granted the admin role and marked as approved,
-   * which allows access to protected admin pages.
+   * Approve an admin application
+   * @param {string} applicationId - Application ID
+   * @param {string} reviewerId - ID of admin who approved
+   * @param {string} reviewNotes - Optional review notes
+   * @returns {Promise<void>}
    */
   async approveApplication(applicationId, reviewerId, reviewNotes = '') {
     try {
@@ -200,7 +198,7 @@ class AdminApplicationService {
 
       const applicationData = applicationDoc.data();
 
-      // Update the application status and review details.
+      // Update application status
       await updateDoc(applicationRef, {
         status: 'approved',
         reviewedBy: reviewerId,
@@ -209,11 +207,10 @@ class AdminApplicationService {
         updatedAt: serverTimestamp()
       });
 
-      // Promote the user to an approved admin.
+      // Update user role to admin
       const userRef = doc(db, 'users', applicationData.userId);
       await updateDoc(userRef, {
         role: 'admin',
-        status: 'approved',
         updatedAt: serverTimestamp()
       });
 
@@ -225,7 +222,11 @@ class AdminApplicationService {
   }
 
   /**
-   * Rejects an admin application and stores the review outcome.
+   * Reject an admin application
+   * @param {string} applicationId - Application ID
+   * @param {string} reviewerId - ID of admin who rejected
+   * @param {string} reviewNotes - Reason for rejection
+   * @returns {Promise<void>}
    */
   async rejectApplication(applicationId, reviewerId, reviewNotes) {
     try {
@@ -236,6 +237,7 @@ class AdminApplicationService {
         throw new Error('Application not found');
       }
 
+      // Update application status
       await updateDoc(applicationRef, {
         status: 'rejected',
         reviewedBy: reviewerId,
@@ -252,18 +254,61 @@ class AdminApplicationService {
   }
 
   /**
-   * Returns summary counts used in the admin applications page.
+   * Get a single application by ID
+   * @param {string} applicationId - Application ID
+   * @returns {Promise<Object>} Application data
+   */
+  async getApplicationById(applicationId) {
+    try {
+      const applicationRef = doc(db, this.collectionName, applicationId);
+      const applicationDoc = await getDoc(applicationRef);
+
+      if (!applicationDoc.exists()) {
+        throw new Error('Application not found');
+      }
+
+      return {
+        id: applicationDoc.id,
+        ...applicationDoc.data()
+      };
+    } catch (error) {
+      console.error('Error fetching application:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an application (admin only)
+   * @param {string} applicationId - Application ID
+   * @returns {Promise<void>}
+   */
+  async deleteApplication(applicationId) {
+    try {
+      const applicationRef = doc(db, this.collectionName, applicationId);
+      await deleteDoc(applicationRef);
+      return true;
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get application statistics
+   * @returns {Promise<Object>} Statistics object
    */
   async getApplicationStats() {
     try {
       const allApps = await this.getAllApplications();
-
-      return {
+      
+      const stats = {
         total: allApps.length,
         pending: allApps.filter(app => app.status === 'pending').length,
         approved: allApps.filter(app => app.status === 'approved').length,
         rejected: allApps.filter(app => app.status === 'rejected').length
       };
+
+      return stats;
     } catch (error) {
       console.error('Error fetching statistics:', error);
       throw error;

@@ -274,3 +274,137 @@
     flex-direction: column;
   }
 }
+
+/* ------------------------------------------------------ */
+/* REALTIME ORDER READY NOTIFICATION POPUP                */
+/* ------------------------------------------------------ */
+/* Floating popup shown when vendor marks an order        */
+/* as ready for collection.                               */
+/* ------------------------------------------------------ */
+
+.ready-popup {
+
+  /* Fixed positioning keeps popup visible while browsing */
+  position: fixed;
+
+  top: 25px;
+  right: 25px;
+
+  /* Professional green success styling */
+  background: #1f7a1f;
+  color: white;
+
+  padding: 16px 22px;
+
+  border-radius: 12px;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  /* Soft shadow for modern UI appearance */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+
+  /* Ensures popup appears above all UI elements */
+  z-index: 9999;
+
+  /* Smooth popup entrance animation */
+  animation: slideIn 0.3s ease;
+}
+
+/* ------------------------------------------------------ */
+/* Popup slide-in animation                               */
+/* ------------------------------------------------------ */
+
+@keyframes slideIn {
+
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.vendor-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.vendor-menu-section {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.vendor-menu-header {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.vendor-menu-header h3 {
+  margin: 0 0 0.4rem;
+  color: #7b2cbf;
+}
+
+.vendor-menu-header p {
+  margin: 0;
+  color: #555;
+}
+
+.student-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.student-menu-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.student-menu-image,
+.student-menu-placeholder {
+  width: 100%;
+  height: 150px;
+  border-radius: 10px;
+  margin-bottom: 0.8rem;
+}
+
+.student-menu-image {
+  object-fit: cover;
+}
+
+.student-menu-placeholder {
+  background: #f1f1f1;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 1px dashed #ccc;
+}
+
+.student-menu-card h4 {
+  margin: 0 0 0.4rem;
+}
+
+.student-menu-card p {
+  font-size: 0.9rem;
+}
+
+.student-available {
+  color: green;
+  font-weight: bold;
+}
+
+.student-sold-out {
+  color: red;
+  font-weight: bold;
+}

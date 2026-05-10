@@ -28,3 +28,41 @@ Sprint 2:
 6B.  As a user, I want to select the vendor role after logging in so that I can complete the vendor registration process and gain access to vendor features once approved.
 
 6C. As a user, I want to select admin role after logging in so that I can complete and submit the admin application form and gain admin privileges once approved.
+
+# Sprint 3
+
+# US1: Vendor menu and order management experience
+
+As a vendor, I want my menu items and customer orders to be displayed and managed in an organised way, so that students can easily browse my products and I can efficiently manage my business.
+
+---
+
+# US2: In-app order notifications
+
+As a student, I want to receive an in-app notification when my order is ready, so that I know when to collect it.
+
+---
+
+# US3: Email notification
+
+As a student, I want to receive an email when my order is ready, so that I am notified even when I am not using the app.
+
+---
+
+# US4: Admin notifications
+
+As an admin, I want to be notified when a vendor requests detail changes, so that I can review and approve them quickly.
+
+---
+
+# US5: Student payments
+
+As a student, I want to pay for my order using PaySnap/PayShip, so that I can complete my order digitally.
+
+---
+
+# US6: Vendor and student analytics
+
+As a vendor, I want to view analytics reports for orders and sales over time, so that I can monitor business performance and identify peak ordering periods.
+
+As a student, I want to view my order history and spending insights, so that I can track my purchases and ordering habits.

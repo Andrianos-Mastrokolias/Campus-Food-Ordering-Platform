@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
 import "../App.css";
 import { Link } from "react-router-dom";
-
+import notificationService from "../services/notificationService";
 // ------------------------------------------------------
 // ORDER STATUS FLOW
 // This defines the valid order status progression.
@@ -51,6 +62,18 @@ export default function VendorDashboard() {
   // Stores the ID of the item currently being edited
   // If null, the form is being used to add a new item
   const [editingItemId, setEditingItemId] = useState(null);
+
+  // Controls whether the vendor change request form is shown
+  const [showChangeRequestForm, setShowChangeRequestForm] = useState(false);
+
+  // Stores the vendor's requested updated business details
+  const [changeRequestData, setChangeRequestData] = useState({
+    businessName: "",
+    businessDescription: "",
+    businessPhone: "",
+    businessAddress: "",
+    businessType: "",
+  });
 
   // Controls whether the edit modal popup is visible
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -140,30 +163,42 @@ export default function VendorDashboard() {
     fetchVendorOrders();
   }, [user, role, loading]);
 
-  // Update the status of a specific order in Firestore
-  // This allows the vendor to move the order through the workflow
-  const updateOrderStatus = async (orderId, newStatus) => {
-    try {
-      // Reference the specific order document in Firestore
-      const orderRef = doc(db, "orders", orderId);
 
-      // Update only the status field
-      await updateDoc(orderRef, {
-        status: newStatus,
-      });
+// Updates an order status in Firestore.
+// If the order becomes ready, a real EmailJS notification is sent to the student.
+const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const orderRef = doc(db, "orders", orderId);
+    const selectedOrder = vendorOrders.find((order) => order.id === orderId);
 
-      // Update local UI state instantly without needing a page refresh
-      setVendorOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId
-            ? { ...order, status: newStatus }
-            : order
-        )
-      );
-    } catch (error) {
-      console.error("Error updating order status:", error.message);
+    await updateDoc(orderRef, {
+      status: newStatus,
+    });
+
+    // US3: trigger real EmailJS notification when the vendor marks an order as ready.
+    // Email failure is handled separately so the order status still updates successfully.
+    if (newStatus === "ready" && selectedOrder) {
+      try {
+        await notificationService.sendOrderReadyEmail({
+          ...selectedOrder,
+          status: newStatus,
+        });
+      } catch (emailError) {
+        console.error("Order status updated, but email notification failed:", emailError);
+      }
     }
-  };
+
+    setVendorOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId
+          ? { ...order, status: newStatus }
+          : order
+      )
+    );
+  } catch (error) {
+    console.error("Error updating order status:", error.message);
+  }
+};
 
   // Handles when a user pastes an image (Cmd+V / Ctrl+V)
   // Converts the image into base64 and stores it for preview
@@ -430,6 +465,31 @@ export default function VendorDashboard() {
     return <p style={{ textAlign: "center", marginTop: "80px" }}>Loading...</p>;
   }
 
+  // Helper function to check whether an order was created today
+  const isToday = (timestamp) => {
+    if (!timestamp?.toDate) return false;
+
+    const orderDate = timestamp.toDate();
+    const today = new Date();
+
+    return (
+      orderDate.getFullYear() === today.getFullYear() &&
+      orderDate.getMonth() === today.getMonth() &&
+      orderDate.getDate() === today.getDate()
+    );
+  };
+
+  // Active orders show at the top
+  const activeOrders = vendorOrders.filter(
+    (order) => order.status !== "completed"
+  );
+
+  // Completed orders only show if they were created today.
+  // Older completed orders are hidden from the vendor dashboard.
+  const completedOrders = vendorOrders.filter(
+    (order) => order.status === "completed" && isToday(order.createdAt)
+  );
+
   return (
     <div className="app">
       <header className="header">
@@ -455,24 +515,33 @@ export default function VendorDashboard() {
       <main className="vendor-dashboard-layout">
         {/* TOP SECTION: Incoming Orders */}
         <section className="orders-section">
-          <h2>Incoming Orders</h2>
-  
-          {vendorOrders.length === 0 ? (
-            <p>No orders yet.</p>
+          <div className="orders-header">
+            <div>
+              <h2>Incoming Orders</h2>
+              <p>Manage and update student orders</p>
+            </div>
+
+            <span className="order-count">{activeOrders.length} active</span>
+          </div>
+
+          {activeOrders.length === 0 ? (
+            <p>No active orders right now.</p>
           ) : (
             <div className="orders-row">
-              {vendorOrders.map((order) => (
+              {activeOrders.map((order) => (
                 <div className="order-card" key={order.id}>
-                  <h3>Order #{order.id.slice(0, 6)}</h3>
-  
-                  <p>
-                    <strong>Student ID:</strong> {order.studentId}
+                  <div className="order-card-top">
+                    <h3>Order {order.dailyOrderNumber || `#${order.id.slice(0, 6)}`}</h3>
+                    <span className={`order-status-label status-${order.status}`}>
+                      {order.status}
+                    </span>
+                  </div>
+
+                  <p className="order-info">
+                    <strong>Student:</strong> #{order.studentId.slice(0, 6)}
                   </p>
-  
-                  <p>
-                    <strong>Status:</strong>
-                  </p>
-  
+
+                  <label className="order-label">Update Status</label>
                   <select
                     value={order.status}
                     onChange={(e) => updateOrderStatus(order.id, e.target.value)}
@@ -491,21 +560,60 @@ export default function VendorDashboard() {
                       </option>
                     ))}
                   </select>
-  
-                  <p>
-                    <strong>Total:</strong> R{order.total.toFixed(2)}
+
+                  <p className="order-total">
+                    Total: R{order.total.toFixed(2)}
                   </p>
-  
+
                   <div className="order-items">
-                    <strong>Items:</strong>
+                    <strong>Items</strong>
                     {order.items.map((item, index) => (
                       <p key={index}>
-                        {item.name} - {item.price} x {item.quantity}
+                        {item.name} × {item.quantity}
                       </p>
                     ))}
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* COMPLETED ORDERS */}
+          {completedOrders.length > 0 && (
+            <div className="completed-orders-section">
+              <h3>Completed Orders</h3>
+
+              <div className="orders-row">
+                {completedOrders.map((order) => (
+                  <div className="order-card completed-order-card" key={order.id}>
+                    <div className="order-card-top">
+                      <h3>Order {order.dailyOrderNumber || `#${order.id.slice(0, 6)}`}</h3>
+
+                      <span className="order-status-label status-completed">
+                        COMPLETED
+                      </span>
+                    </div>
+
+                    <p className="order-info">
+                      <strong>Student:</strong> #{order.studentId.slice(0, 6)}
+                    </p>
+
+                    <p className="order-total">
+                      Total: R{order.total.toFixed(2)}
+                    </p>
+
+                    <div className="order-items">
+                      <strong>Items</strong>
+
+                      {order.items.map((item, index) => (
+                        <p key={index}>
+                          {item.name} × {item.quantity}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>

@@ -21,10 +21,7 @@ export default function Layout({ children }) {
     return <>{children}</>;
   }
 
-  // Show the vendor dashboard only after the vendor has been approved.
   const isApprovedVendor = role === 'vendor' && status === 'approved';
-
-  // Show admin review pages only after the admin request has been approved.
   const isApprovedAdmin = role === 'admin' && status === 'approved';
 
   return (
@@ -32,6 +29,7 @@ export default function Layout({ children }) {
       <header className="header">
         <div className="header-content">
           <h1 className="logo">Campus Food Ordering Platform</h1>
+
           <nav className="nav">
             <div className="user-info">
               Welcome, {user.displayName || user.email} ({role})
@@ -39,35 +37,19 @@ export default function Layout({ children }) {
 
             {role === 'student' && (
               <>
-                {/* ================= STUDENT NAVIGATION ================= */}
-
-                {/* Home page - browse all menu items */}
-                <Link to="/home" className="nav-link">
-                  Home
-                </Link>
-
-                {/* Order tracking page - view all placed orders */}
-                <Link to="/orders" className="nav-link">
-                  My Orders
-                </Link>
-
-                {/* Vendor registration page */}
-                <Link to="/register-vendor" className="nav-link">
-                  Register as Vendor
-                </Link>
-
-                {/* Admin application page */}
-                <Link to="/apply-admin" className="nav-link">
-                  Apply for Admin
-                </Link>
-
-                {/* ====================================================== */}
+                <Link to="/home" className="nav-link">Home</Link>
+                <Link to="/orders" className="nav-link">My Orders</Link>
+                <Link to="/student/analytics" className="nav-link">Analytics</Link>
+                <Link to="/register-vendor" className="nav-link">Register as Vendor</Link>
+                <Link to="/apply-admin" className="nav-link">Apply for Admin</Link>
               </>
             )}
 
             {isApprovedVendor && (
               <>
                 <Link to="/vendor/dashboard" className="nav-link">Dashboard</Link>
+                <Link to="/vendor/analytics" className="nav-link">Analytics</Link>
+                <Link to="/vendor/change-request" className="nav-link">Request Detail Change</Link>
                 <Link to="/apply-admin" className="nav-link">Apply for Admin</Link>
               </>
             )}
@@ -76,6 +58,7 @@ export default function Layout({ children }) {
               <>
                 <Link to="/admin/applications" className="nav-link">Admin Applications</Link>
                 <Link to="/admin/vendors" className="nav-link">Vendor Applications</Link>
+                <Link to="/admin/vendor-change-requests" className="nav-link">Detail Requests</Link>
               </>
             )}
 
@@ -89,8 +72,6 @@ export default function Layout({ children }) {
       <main className="main-content">
         {children}
       </main>
-
-
 
       <footer className="footer">
         © 2026 Campus Food Ordering Platform - COMS3009A Software Design
