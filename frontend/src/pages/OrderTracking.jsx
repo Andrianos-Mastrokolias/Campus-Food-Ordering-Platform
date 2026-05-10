@@ -139,8 +139,8 @@ const latestOrderId = orders.length > 0 ? orders[0].id : null;
 
               {/* Vendor */}
               <p>
-                Vendor: <strong>{order.vendorId}</strong>
-              </p>
+              Vendor: <strong>{order.vendorName || order.vendorId}</strong>
+              </p> 
 
               {/* Live progress bar */}
               <div className="progress-bar">
