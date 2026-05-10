@@ -6,12 +6,14 @@ import { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import "./OrderTracking.css";
 
 
 export default function OrderTracking() {
   const { user } = useAuth();
-
+  
+  const navigate = useNavigate();
   // Stores ALL live student orders
   const [orders, setOrders] = useState([]);
 
@@ -161,17 +163,34 @@ const latestOrderId = orders.length > 0 ? orders[0].id : null;
               </div>
 
               {/* Total */}
-              <div className="total">
-                Total: R{order.total.toFixed(2)}
-              </div>
+<div className="total">
+  Total: R{order.total.toFixed(2)}
+</div>
 
-              {/* Timestamp */}
-              <p className="timestamp">
-                Placed:{" "}
-                {order.createdAt?.toDate
-                  ? order.createdAt.toDate().toLocaleString()
-                  : "Just now"}
-              </p>
+{/* Timestamp */}
+<p className="timestamp">
+  Placed:{" "}
+  {order.createdAt?.toDate
+    ? order.createdAt.toDate().toLocaleString()
+    : "Just now"}
+</p>
+
+{/* Pay Now button for unpaid pending orders */}
+{order.status === "pending" && (
+  <button
+    className="pay-now-btn"
+    onClick={() => navigate('/checkout', {
+      state: {
+        orderId: order.id,
+        items: order.items,
+        total: order.total,
+        vendorName: order.vendorName,
+      }
+    })}
+  >
+    💳 Pay Now
+  </button>
+)}
             </div>
           ))}
         </div>

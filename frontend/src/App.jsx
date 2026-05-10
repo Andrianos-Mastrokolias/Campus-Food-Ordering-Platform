@@ -15,6 +15,9 @@ import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import VendorDetailChangeRequest from "./pages/VendorDetailChangeRequest/VendorDetailChangeRequest";
 import AdminVendorChangeRequests from "./pages/AdminVendorChangeRequests/AdminVendorChangeRequests";
 import Layout from "./components/Layout";
+import CheckoutPage   from "./components/Payment/CheckoutPage";
+import PaymentPage    from "./components/Payment/PaymentPage";
+import PaymentHistory from "./components/Payment/PaymentHistory";
 
 export default function App() {
   return (
@@ -127,6 +130,32 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+<Route
+  path="/checkout"
+  element={
+    <ProtectedRoute allowedRoles={["student"]}>
+      <CheckoutPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/payment"
+  element={
+    <ProtectedRoute allowedRoles={["student"]}>
+      <PaymentPage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/payment-history"
+  element={
+    <ProtectedRoute allowedRoles={["student"]}>
+      <PaymentHistory />
+    </ProtectedRoute>
+  }
+/>
 
         <Route path="*" element={<Login />} />
       </Routes>

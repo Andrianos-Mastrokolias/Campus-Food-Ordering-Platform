@@ -1,6 +1,7 @@
 import LogoutButton from "../components/LogoutButton";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import paymentService from '../services/paymentService';
 import { useState, useEffect } from "react"; // useEffect fetches live menu items when the page loads
 // ------------------------------------------------------
 // Firestore imports
@@ -487,21 +488,61 @@ const handleCheckout = async () => {
             <div className="cart-summary">
               <h3 className="cart-total">Total: R{total.toFixed(2)}</h3>
               <div className="cart-actions">
-                <button
-                  onClick={handleCheckout}
-                  disabled={cart.length === 0}
-                  className="checkout-btn"
-                >
-                  Checkout
-                </button>
-                <button
-                  onClick={clearCart}
-                  disabled={cart.length === 0}
-                  className="clear-btn"
-                >
-                  Clear Cart
-                </button>
-              </div>
+  <button
+    onClick={handleCheckout}
+    disabled={cart.length === 0}
+    className="checkout-btn"
+  >
+    Checkout
+  </button>
+  <button
+  onClick={async () => {
+    if (!user) { navigate('/login'); return; }
+    try {
+      const orderId   = `CF-${Date.now().toString(36).toUpperCase()}`;
+      const amount    = total + 5.00;
+      const paymentId = await paymentService.createPayment({
+        userId:    user.uid,
+        userEmail: user.email,
+        userName:  user.displayName,
+        orderId,
+        amount,
+        method:    'upi',
+        items:     cart.map(item => ({
+          name:  item.name,
+          qty:   1,
+          price: Number(String(item.price).replace('R', '')),
+        })),
+      });
+      navigate('/payment', {
+        state: {
+          paymentId,
+          orderId,
+          amount,
+          method: 'upi',
+          items:  cart,
+          showMethodSelector: true,
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Could not initiate payment. Please try again.');
+    }
+  }}
+  disabled={cart.length === 0}
+  className="checkout-btn"
+  style={{ background: '#1e3a5f' }}
+>
+  💳 Pay Now
+</button>
+  <button
+    onClick={clearCart}
+    disabled={cart.length === 0}
+    className="clear-btn"
+  >
+    Clear Cart
+  </button>
+</div>
             </div>
 
               
