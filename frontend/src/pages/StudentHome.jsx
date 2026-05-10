@@ -14,6 +14,8 @@ import { useState, useEffect } from "react"; // useEffect fetches live menu item
 // ------------------------------------------------------
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
   addDoc,
   serverTimestamp,
@@ -35,6 +37,9 @@ export default function StudentHome() {
   const navigate = useNavigate();
   // Stores all menu items fetched from Firestore
   const [menuItems, setMenuItems] = useState([]);
+
+  // Stores menu items grouped by vendor so the student page is easier to browse
+  const [vendorsWithItems, setVendorsWithItems] = useState([]);
 
   // Tracks whether menu data is still loading
   const [loading, setLoading] = useState(true);
@@ -96,12 +101,59 @@ const generateDailyOrderNumber = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "menuItems"));
 
-        const items = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const items = querySnapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
         }));
-
+        
         setMenuItems(items);
+        
+        // Group menu items by vendorId
+        const groupedItems = {};
+        
+        items.forEach((item) => {
+          const vendorId = item.vendorId || "unknown-vendor";
+        
+          if (!groupedItems[vendorId]) {
+            groupedItems[vendorId] = {
+              vendorId,
+              vendorName: item.vendorName || "Unknown Vendor",
+              vendorDescription: "",
+              items: [],
+            };
+          }
+        
+          groupedItems[vendorId].items.push(item);
+        });
+        
+        // Fetch vendor profile details for each vendor group
+        const vendorGroups = await Promise.all(
+          Object.values(groupedItems).map(async (group) => {
+            try {
+              const vendorRef = doc(db, "users", group.vendorId);
+              const vendorSnap = await getDoc(vendorRef);
+        
+              if (vendorSnap.exists()) {
+                const vendorData = vendorSnap.data();
+        
+                return {
+                  ...group,
+                  vendorName:
+                    vendorData.vendorProfile?.businessName || group.vendorName,
+                  vendorDescription:
+                    vendorData.vendorProfile?.businessDescription || "",
+                };
+              }
+        
+              return group;
+            } catch (error) {
+              console.error("Error fetching vendor profile:", error.message);
+              return group;
+            }
+          })
+        );
+        
+        setVendorsWithItems(vendorGroups);
       } catch (error) {
         console.error("Error fetching student menu:", error.message);
       } finally {
@@ -224,7 +276,7 @@ const handleCheckout = async () => {
     const ordersByVendor = {};
 
     cart.forEach((item) => {
-      const vendorId = item.vendor;
+      const vendorId = item.vendor?.id || item.vendor;
 
       // If vendor doesn't exist in object yet, create it
       if (!ordersByVendor[vendorId]) {
@@ -255,6 +307,7 @@ const handleCheckout = async () => {
 
       const orderData = {
         vendorId,                 // which vendor receives this order
+        vendorName: cart.find((item) => (item.vendor?.id || item.vendor) === vendorId)?.vendor?.name || "Unknown Vendor",
         studentId: user.uid,      // who placed the order
         studentEmail: user.email, // store email for easy reference
         items: vendorItems,       // list of items
@@ -345,80 +398,59 @@ const handleCheckout = async () => {
       </div>
 
       <section className="menu-section">
-        <h2>Menu</h2>
+        <h2>Menu by Vendor</h2>
 
-        {menuItems.length === 0 ? (
+        {vendorsWithItems.length === 0 ? (
           <p>No menu items available yet.</p>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gap: "20px",
-              maxWidth: "500px",
-              margin: "0 auto",
-            }}
-          >
-            {menuItems.map((item) => (
-              <div
-                key={item.id}
-                style={{
-                  border: "1px solid #ddd",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  background: "#fff",
-                }}
-              >
-                {item.photoUrl ? (
-                  <img
-                    src={item.photoUrl}
-                    alt={item.name}
-                    style={{
-                      width: "45%",
-                      height: "180px",
-                      objectFit: "cover",
-                      borderRadius: "10px",
-                      display: "block",
-                      margin: "0 auto 16px",
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: "45%",
-                      height: "180px",
-                      borderRadius: "10px",
-                      margin: "0 auto 16px",
-                      background: "#f1f1f1",
-                      color: "#666",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
-                      border: "1px dashed #ccc",
-                    }}
-                  >
-                    Image not available yet
-                  </div>
-                )}
+          <div className="vendor-menu-list">
+            {vendorsWithItems.map((vendor) => (
+              <div key={vendor.vendorId} className="vendor-menu-section">
+                <div className="vendor-menu-header">
+                  <h3>{vendor.vendorName}</h3>
+                  {vendor.vendorDescription && <p>{vendor.vendorDescription}</p>}
+                </div>
 
-                <h3>{item.name}</h3>
-                <p>{item.description}</p>
-                <p>
-                  <strong>{item.price}</strong>
-                </p>
-                <p><strong>Stock:</strong> {item.stock ?? 0}</p>
+                <div className="student-menu-grid">
+                  {vendor.items.map((item) => (
+                    <div key={item.id} className="student-menu-card">
+                      {item.photoUrl ? (
+                        <img
+                          src={item.photoUrl}
+                          alt={item.name}
+                          className="student-menu-image"
+                        />
+                      ) : (
+                        <div className="student-menu-placeholder">
+                          Image not available yet
+                        </div>
+                      )}
 
-                <p style={{ fontWeight: "bold", color: (item.stock ?? 0) > 0 ? "green" : "red" }}>
-                  {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
-                </p>
+                      <h4>{item.name}</h4>
+                      <p>{item.description}</p>
+                      <p>
+                        <strong>{item.price}</strong>
+                      </p>
 
-                <button
-                  onClick={() => addToCart(item, item.vendorId)}
-                  disabled={(item.stock ?? 0) === 0}
-                  className="add-btn"
-                >
-                  {(item.stock ?? 0) > 0 ? "Add to Cart" : "Unavailable"}
-                </button>
+                      <p className={(item.stock ?? 0) > 0 ? "student-available" : "student-sold-out"}>
+                        {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
+                      </p>
+
+                      <button
+                        onClick={() =>
+                          addToCart(item, {
+                            id: item.vendorId,
+                            name: vendor.vendorName,
+                          })
+                        }
+                        disabled={(item.stock ?? 0) === 0}
+                        className="add-btn"
+                      >
+                        {(item.stock ?? 0) > 0 ? "Add to Cart" : "Unavailable"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -437,7 +469,7 @@ const handleCheckout = async () => {
                 <div key={i} className="cart-item">
                   <div className="cart-item-details">
                     <span className="cart-item-name">{item.name}</span>
-                    <span className="cart-item-vendor">({item.vendor})</span>
+                    <span className="cart-item-vendor">({item.vendor?.name || item.vendor})</span>
                   </div>
                   <div className="cart-item-actions">
                     <span className="cart-item-price">{item.price}</span>
