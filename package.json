@@ -1,7 +1,6 @@
 {
   "name": "campus-food-ordering-platform",
   "version": "1.0.0",
-  "description": "Campus Food Ordering Platform - User Story 3: Admin Role Application System",
   "private": true,
   "scripts": {
     "dev": "vite",
