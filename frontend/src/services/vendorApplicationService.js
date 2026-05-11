@@ -230,8 +230,7 @@ class VendorApplicationService {
    * 1. the vendor application record
    * 2. the user record
    *
-   * The user only becomes a valid vendor after role, status, and shop number
-   * have all been written successfully.
+   * The vendor also receives an EmailJS approval email after approval succeeds.
    */
   async approveApplication(applicationId, reviewerId, reviewNotes = '') {
     try {
@@ -249,7 +248,7 @@ class VendorApplicationService {
         applicationData.shopNumber ||
         this.generateShopNumber(applicationId, applicationData.userId);
 
-      // Update the vendor application with its final approval details.
+      // Update the vendor application with final approval details.
       await updateDoc(applicationRef, {
         status: 'approved',
         shopNumber,
@@ -268,6 +267,20 @@ class VendorApplicationService {
         vendorProfile: this.buildVendorProfile(applicationData, shopNumber),
         updatedAt: serverTimestamp()
       });
+
+      // Notify the vendor that their account has been verified and approved.
+      // Email failure should not block the approval process.
+      try {
+        await notificationService.sendVendorApprovedEmail({
+          email: applicationData.userEmail,
+          name: applicationData.userName,
+          businessName: applicationData.businessName,
+          shopNumber,
+          vendorId: applicationData.userId
+        });
+      } catch (emailError) {
+        console.error('Vendor was approved, but approval email failed:', emailError);
+      }
 
       return shopNumber;
     } catch (error) {

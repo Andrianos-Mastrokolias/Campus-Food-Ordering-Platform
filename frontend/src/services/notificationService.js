@@ -35,34 +35,94 @@ class NotificationService {
   }
 
   async sendOrderReadyEmail(order) {
-    this.validateEmailJsConfig(this.orderReadyTemplateId);
+  this.validateEmailJsConfig(this.orderReadyTemplateId);
 
-    if (!order.studentEmail) {
-      throw new Error('Student email is missing. Place a new order so studentEmail is stored on the order.');
-    }
-
-    const templateParams = {
-      to_email: order.studentEmail,
-      student_name: order.studentName || order.studentEmail || 'Student',
-      order_id: order.id?.slice(0, 6) || 'N/A',
-      name: 'Campus Food Ordering Platform',
-      email: this.adminEmail || order.studentEmail
-    };
-
-    await emailjs.send(this.serviceId, this.orderReadyTemplateId, templateParams, this.publicKey);
-
-    await this.logNotification({
-      type: 'order_ready',
-      toEmail: order.studentEmail,
-      subject: 'Your order is ready for collection',
-      orderId: order.id,
-      vendorId: order.vendorId,
-      studentId: order.studentId || null,
-      status: 'sent'
-    });
-
-    return true;
+  if (!order.studentEmail) {
+    throw new Error('Student email is missing. Place a new order so studentEmail is stored on the order.');
   }
+
+  const templateParams = {
+    to_email: order.studentEmail,
+    recipient_name:
+      order.studentName ||
+      order.studentEmail ||
+      'Student',
+
+    email_subject: 'Your order is ready for collection',
+
+    email_title: 'Your order is ready for collection',
+
+    email_message:
+      `Your order #${order.id?.slice(0, 6) || 'N/A'} is ready for collection.`,
+
+    name: 'Campus Food Ordering Platform',
+    email: this.adminEmail || order.studentEmail
+  };
+
+  await emailjs.send(
+    this.serviceId,
+    this.orderReadyTemplateId,
+    templateParams,
+    this.publicKey
+  );
+
+  await this.logNotification({
+    type: 'order_ready',
+    toEmail: order.studentEmail,
+    subject: 'Your order is ready for collection',
+    orderId: order.id,
+    vendorId: order.vendorId,
+    studentId: order.studentId || null,
+    status: 'sent'
+  });
+
+  return true;
+}
+
+async sendVendorApprovedEmail(vendorData) {
+  this.validateEmailJsConfig(this.orderReadyTemplateId);
+
+  if (!vendorData.email) {
+    throw new Error('Vendor email is missing.');
+  }
+
+  const templateParams = {
+    to_email: vendorData.email,
+
+    recipient_name:
+      vendorData.name ||
+      vendorData.businessName ||
+      vendorData.email ||
+      'Vendor',
+
+    email_subject: 'Your vendor account has been approved',
+
+    email_title: 'Vendor account approved',
+
+    email_message:
+      `Your vendor account has been verified and approved. Your shop number is ${vendorData.shopNumber || 'N/A'}. You can now access the vendor dashboard.`,
+
+    name: 'Campus Food Ordering Platform',
+    email: this.adminEmail || vendorData.email
+  };
+
+  await emailjs.send(
+    this.serviceId,
+    this.orderReadyTemplateId,
+    templateParams,
+    this.publicKey
+  );
+
+  await this.logNotification({
+    type: 'vendor_approved',
+    toEmail: vendorData.email,
+    subject: 'Vendor account approved',
+    vendorId: vendorData.vendorId || null,
+    status: 'sent'
+  });
+
+  return true;
+}
 
   async sendAdminVendorChangeRequestEmail(request) {
     this.validateEmailJsConfig(this.adminTemplateId);
