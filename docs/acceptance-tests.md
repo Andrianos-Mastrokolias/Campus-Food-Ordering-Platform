@@ -424,23 +424,22 @@ Then the order remains unpaid.
 
 ## Test 6.1 – Vendor views order analytics
 
-Given vendor orders exist
+Given that vendor orders exist
 When the vendor opens the analytics dashboard
-Then total orders, revenue, and best-selling items are displayed.
+Then, sales reports and peak ordering hours are displayed.
 
 ---
 
 ## Test 6.2 – Student views order insights
 
-Given a student has previous orders
+Given that a student has previous orders
 When the student opens the analytics page
-Then spending summaries and recent orders are displayed.
-
+Then their spending insights and order history are displayed
 ---
 
 ## Test 6.3 – Analytics displayed visually
 
-Given analytics data exists
-When the analytics pages load
-Then charts or cards are displayed for the analytics data.
+Given that a user is viewing analytics reports
+When the user clicks Export CSV or Export PDF
+Then the report downloads successfully.
 
