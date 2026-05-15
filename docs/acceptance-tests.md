@@ -443,3 +443,36 @@ Given that a user is viewing analytics reports
 When the user clicks Export CSV or Export PDF
 Then the report downloads successfully.
 
+# Sprint 4
+
+# Acceptance Tests US 1: Vendor approval email notification
+
+## Test 1 – Vendor receives approval email
+
+Given a user has submitted a vendor application  
+When an admin approves the vendor application  
+Then the vendor receives an email confirming that their vendor account has been approved.
+
+---
+
+## Test 2 – Approval email includes shop number
+
+Given a vendor application is approved  
+When the approval email is sent  
+Then the email includes the vendor’s generated shop number.
+
+---
+
+## Test 3 – Vendor approval still succeeds if email fails
+
+Given the email service is unavailable  
+When an admin approves a vendor application  
+Then the vendor account is still approved and the shop number is still saved.
+
+---
+
+## Test 4 – Notification log is created
+
+Given a vendor approval email is sent  
+When the notification process completes  
+Then a notification log is stored in Firestore.
