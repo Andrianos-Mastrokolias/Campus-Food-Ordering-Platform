@@ -66,3 +66,9 @@ As a student, I want to pay for my order using PaySnap/PayShip, so that I can co
 As a vendor, I want to view analytics reports for orders and sales over time, so that I can monitor business performance and identify peak ordering periods.
 
 As a student, I want to view my order history and spending insights, so that I can track my purchases and ordering habits.
+
+# Sprint 4
+
+# User Story 1: Vendor approval email notification
+
+As a vendor, I want to receive an email when my vendor application is approved, so that I know my account has been verified and I can start using the vendor dashboard.
