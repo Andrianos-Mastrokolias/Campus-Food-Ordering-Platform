@@ -1,0 +1,23 @@
+{
+  "allergens": [
+    "Cow's Milk",
+    "Egg",
+    "Fish",
+    "Crustaceans and Molluscs",
+    "Peanuts",
+    "Tree Nuts",
+    "Soya",
+    "Gluten / Significant Cereals",
+    "Sulphites"
+  ],
+  "dietaryTags": [
+    "Halal",
+    "Vegan",
+    "Vegetarian",
+    "Nut-Free",
+    "Gluten-Free",
+    "Dairy-Free",
+    "Egg-Free",
+    "Seafood-Free"
+  ]
+}
