@@ -30,6 +30,18 @@ jobs:
       - name: Build frontend
         working-directory: ./frontend
         run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: "AIzaSyAodPISMTOM4irn-cLtWz6Zj5yBRHYsuVM"
+          VITE_FIREBASE_AUTH_DOMAIN: "campus-food-app-f3973.firebaseapp.com"
+          VITE_FIREBASE_PROJECT_ID: "campus-food-app-f3973"
+          VITE_FIREBASE_STORAGE_BUCKET: "campus-food-app-f3973.firebasestorage.app"
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "278743038373"
+          VITE_FIREBASE_APP_ID: "1:278743038373:web:8029f79ce906d7c6cb104c"
+          VITE_EMAILJS_SERVICE_ID: "service_mf385rd"
+          VITE_EMAILJS_ORDER_READY_TEMPLATE_ID: "template_smmjg2n"
+          VITE_EMAILJS_ADMIN_TEMPLATE_ID: "template_1ifhtx5"
+          VITE_EMAILJS_PUBLIC_KEY: "l49SFIgiSKq2z_imm"
+          VITE_ADMIN_NOTIFICATION_EMAIL: "2704947@students.wits.ac.za"
 
       - name: Upload frontend dist artifact
         uses: actions/upload-artifact@v4
