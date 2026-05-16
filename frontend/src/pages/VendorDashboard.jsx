@@ -532,7 +532,9 @@ const updateOrderStatus = async (orderId, newStatus) => {
               {activeOrders.map((order) => (
                 <div className="order-card" key={order.id}>
                   <div className="order-card-top">
-                    <h3>Order {order.dailyOrderNumber || `#${order.id.slice(0, 6)}`}</h3>
+                    <h3>
+                      Order #{order.orderId?.slice(0, 10) || order.id.slice(0, 6)}
+                    </h3>
                     <span className={`order-status-label status-${order.status}`}>
                       {order.status}
                     </span>
@@ -550,6 +552,15 @@ const updateOrderStatus = async (orderId, newStatus) => {
                   <p className="order-info">
                     <strong>Student:</strong> #{order.studentId.slice(0, 6)}
                   </p>
+                  {/* debugging purposes*/}
+                  <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                    Shared Order ID: {order.orderId}
+                  </p>
+
+                  <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                    Vendor Order ID: {order.vendorOrderId}
+                  </p>
+
 
                   <label className="order-label">Update Status</label>
                   <select
