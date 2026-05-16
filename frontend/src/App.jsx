@@ -18,11 +18,24 @@ import Layout from "./components/Layout";
 import CheckoutPage   from "./components/Payment/CheckoutPage";
 import PaymentPage    from "./components/Payment/PaymentPage";
 import PaymentHistory from "./components/Payment/PaymentHistory";
+import SupportPage from "./pages/SupportPage";
 
 export default function App() {
   return (
     <Layout>
       <Routes>
+        {/* -------------------------------------------------- */
+/* STUDENT SUPPORT PAGE */
+/* Gives students access to order policies and support */
+/* -------------------------------------------------- */}
+        <Route
+          path="/support"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <SupportPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<Login />} />
         <Route path="/select-role" element={<SelectRole />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
