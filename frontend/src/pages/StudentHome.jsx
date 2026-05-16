@@ -184,6 +184,17 @@ export default function StudentHome() {
               💳 Payment History
             </button>
           </Link>
+          {/* -------------------------------------------------- */
+              /* SUPPORT PAGE BUTTON */
+             /* Takes students to the support/help page */
+            /* -------------------------------------------------- */}
+
+          <Link to="/support">
+            <button type="button" className="analytics-dashboard-btn">
+              📩 Support & Order Policy
+            </button>
+          </Link>
+
         </div>
       </div>
 
