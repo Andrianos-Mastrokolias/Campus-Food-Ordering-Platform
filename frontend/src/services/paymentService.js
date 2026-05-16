@@ -177,9 +177,16 @@ class PaymentService {
 
       const orderIds = [];
       for (const vendorId in ordersByVendor) {
+      // --------------------------------------------------
+      // NEW: Unique ID per vendor order
+      // This prevents confusion when multiple vendors
+      // are included in one checkout
+      // --------------------------------------------------
+        const vendorOrderId = `${orderId}-${vendorId}`;
         const group = ordersByVendor[vendorId];
         const ref = await addDoc(collection(db, ORDERS_COLLECTION), {
-          orderId,
+          orderId,  //Shared ID for the whole checkout (DO NOT CHANGE)
+          vendorOrderId, //Unique ID for this vendor's order (NEW)
           paymentId,
           transactionRef:  transactionRef || null,
           vendorId:        group.vendorId,
