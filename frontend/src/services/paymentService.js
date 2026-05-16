@@ -177,36 +177,43 @@ class PaymentService {
 
       const orderIds = [];
       for (const vendorId in ordersByVendor) {
-      // --------------------------------------------------
-      // NEW: Unique ID per vendor order
-      // This prevents confusion when multiple vendors
-      // are included in one checkout
-      // --------------------------------------------------
-        const vendorOrderId = `${orderId}-${vendorId}`;
         const group = ordersByVendor[vendorId];
+
         const ref = await addDoc(collection(db, ORDERS_COLLECTION), {
-          orderId,  //Shared ID for the whole checkout (DO NOT CHANGE)
-          vendorOrderId, //Unique ID for this vendor's order (NEW)
+          orderId,  // Shared ID for whole checkout (DO NOT CHANGE)
+
+  
+
           paymentId,
-          transactionRef:  transactionRef || null,
-          vendorId:        group.vendorId,
-          vendorName:      group.vendorName,
-          studentId:       userId,
-          studentEmail:    userEmail,
-          studentName:     userName || '',
-          items:           group.items,
-          total:           group.total,
-          // US3: Order starts as "paid" — not "pending"
-          // "paid"     = payment confirmed, waiting for vendor to start preparing
-          // "preparing" = vendor is making the order
-          // "ready"     = order is ready for collection
-          // "completed" = student collected the order
-          status:          'paid',
-          paymentStatus:   'paid',
-          createdAt:       serverTimestamp(),
+          transactionRef: transactionRef || null,
+
+          vendorId: group.vendorId,
+          vendorName: group.vendorName,
+          studentId: userId,
+          studentEmail: userEmail,
+          studentName: userName || '',
+
+          items: group.items,
+          total: group.total,
+
+          // US3: Order starts as "paid"
+          status: 'paid',
+          paymentStatus: 'paid',
+          createdAt: serverTimestamp(),
         });
+
+        
+
+        // --------------------------------------------------
+        // IMPORTANT: Now update doc with its real Firestore ID
+        // --------------------------------------------------
+        await updateDoc(ref, {
+          vendorOrderId: ref.id
+        });
+
         orderIds.push(ref.id);
       }
+      
 
       return orderIds;
     } catch (error) {
