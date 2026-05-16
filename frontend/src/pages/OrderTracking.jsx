@@ -165,7 +165,24 @@ export default function OrderTracking() {
             >
               {/* Top row */}
               <div className="order-top">
-                <h3>Order #{(order.orderId || order.id).slice(0, 10)}</h3>
+                <h3>
+                  {/* 
+                  ORDER DISPLAY FIX (Sprint 4 improvement)
+
+                  We now show vendorOrderId if it exists.
+                  This prevents confusion when one checkout
+                  creates multiple vendor-specific orders.
+
+                  Fallbacks:
+                  1. vendorOrderId (best)
+                  2. orderId (shared checkout ID)
+                  3. Firestore doc id (last fallback)
+                -------------------------------------------------- */}
+                  Order #{(order.vendorOrderId || order.orderId || order.id).slice(0, 10)}
+                  <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                    Order ID: {order.orderId}
+                  </p>
+                </h3>
                 <span
                   className="status-badge"
                   style={{ backgroundColor: getStatusColor(order.status) }}
@@ -173,6 +190,12 @@ export default function OrderTracking() {
                   {order.status?.toUpperCase()}
                 </span>
               </div>
+               {/* ux changes below for display*/}
+              {order.vendorOrderId && (
+                <p style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "4px" }}>
+                  Ref: {order.vendorOrderId}
+                </p>
+              )}
 
               {/* US3: Payment status label */}
               <p style={{
@@ -184,7 +207,9 @@ export default function OrderTracking() {
                 {getStatusLabel(order.status)}
               </p>
 
-              <p>Vendor: <strong>{order.vendorName || order.vendorId}</strong></p>
+              <p>
+                Vendor: <strong>{order.vendorName}</strong>
+              </p>
 
               {/* Progress bar — US3: includes "paid" step */}
               <div className="progress-bar">
@@ -218,7 +243,7 @@ export default function OrderTracking() {
               {/* Transaction ref if available */}
               {order.transactionRef && (
                 <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
-                  Ref: <code>{order.transactionRef}</code>
+                 Payment Ref: <code>{order.transactionRef}</code>
                 </p>
               )}
 
