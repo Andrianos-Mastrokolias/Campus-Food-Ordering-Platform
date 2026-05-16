@@ -23,8 +23,9 @@ import notificationService from "../services/notificationService";
 // Vendors should move orders forward through these stages
 // so students see a consistent tracking flow.
 // ------------------------------------------------------
+// US3: Orders now start as "paid" — confirmed payment required before preparation
 const ORDER_STATUS_FLOW = [
-  "pending",
+  "paid",
   "preparing",
   "ready",
   "completed"
@@ -536,6 +537,15 @@ const updateOrderStatus = async (orderId, newStatus) => {
                       {order.status}
                     </span>
                   </div>
+
+                  {/* US3: Payment confirmed badge */}
+                  <p style={{
+                    fontSize: '0.78rem', fontWeight: '700', color: '#065f46',
+                    marginBottom: '6px', background: '#dcfce7',
+                    padding: '3px 10px', borderRadius: '4px', display: 'inline-block'
+                  }}>
+                    💰 Payment Confirmed
+                  </p>
 
                   <p className="order-info">
                     <strong>Student:</strong> #{order.studentId.slice(0, 6)}
