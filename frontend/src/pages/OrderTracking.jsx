@@ -1,52 +1,34 @@
 // OrderTracking.jsx
 // REAL-TIME Student Order Tracking
-// Now uses Firestore onSnapshot for live updates from vendor actions
+// US3 update: new "paid" status added to progress bar and colour mapping
 
 import { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import paymentService from "../services/paymentService";
 import "./OrderTracking.css";
 
-
 export default function OrderTracking() {
-  const { user } = useAuth();
-  
-  const navigate = useNavigate();
-  // Stores ALL live student orders
-  const [orders, setOrders] = useState([]);
-
-  // Loading state
+  const { user }    = useAuth();
+  const navigate    = useNavigate();
+  const [orders, setOrders]   = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Finds the most recent order so we can highlight it visually
-const latestOrderId = orders.length > 0 ? orders[0].id : null;
+  const latestOrderId = orders.length > 0 ? orders[0].id : null;
 
   useEffect(() => {
     if (!user) return;
-
-    // 🔥 Create a query for ONLY this student's orders
     const q = query(
       collection(db, "orders"),
       where("studentId", "==", user.uid)
     );
-
-    // 🔴 REAL-TIME LISTENER (this is the key upgrade)
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        // Convert Firestore docs → JS objects
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        // Sort newest first
-        data.sort(
-          (a, b) => b.createdAt?.seconds - a.createdAt?.seconds
-        );
-
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        data.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds);
         setOrders(data);
         setLoading(false);
       },
@@ -55,40 +37,87 @@ const latestOrderId = orders.length > 0 ? orders[0].id : null;
         setLoading(false);
       }
     );
-
-    // Cleanup listener when page closes
     return () => unsubscribe();
   }, [user]);
 
-  // Progress mapping (for UI bar)
+  /**
+   * US3: Updated progress to include "paid" status.
+   * paid(25) → preparing(50) → ready(80) → completed(100)
+   */
   const getProgress = (status) => {
     switch (status) {
-      case "pending":
-        return 20;
-      case "preparing":
-        return 50;
-      case "ready":
-        return 80;
-      case "completed":
-        return 100;
-      default:
-        return 0;
+      case "paid":       return 25;
+      case "preparing":  return 50;
+      case "ready":      return 80;
+      case "completed":  return 100;
+      default:           return 10;
     }
   };
 
-  // Color mapping for status badges
+  /**
+   * US3: Updated colours — "paid" is green to signal payment confirmed.
+   */
   const getStatusColor = (status) => {
     switch (status) {
-      case "pending":
-        return "#f39c12";
-      case "preparing":
-        return "#3498db";
-      case "ready":
-        return "#2ecc71";
-      case "completed":
-        return "#7f8c8d";
-      default:
-        return "#ccc";
+      case "paid":       return "#10b981";   // green — payment confirmed
+      case "preparing":  return "#3498db";   // blue
+      case "ready":      return "#2ecc71";   // bright green
+      case "completed":  return "#7f8c8d";   // grey
+      default:           return "#f39c12";   // amber
+    }
+  };
+
+  /**
+   * US3: Human-readable status labels.
+   */
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "paid":       return "✅ Paid — Awaiting Preparation";
+      case "preparing":  return "👨‍🍳 Preparing";
+      case "ready":      return "🔔 Ready for Collection";
+      case "completed":  return "✓ Completed";
+      default:           return status;
+    }
+  };
+
+  /**
+   * US3: Pay Now handler for orders that still have status "pending"
+   * (legacy orders created before this update).
+   */
+  const handlePayNow = async (order) => {
+    if (!user) { navigate('/login'); return; }
+    try {
+      const orderId   = order.orderId || order.id;
+      const amount    = (order.total || 0) + 5.00;
+      const paymentId = await paymentService.createPayment({
+        userId:    user.uid,
+        userEmail: user.email,
+        userName:  user.displayName || '',
+        orderId,
+        amount,
+        method:    'upi',
+        items:     (order.items || []).map(item => ({
+          name:      item.name,
+          qty:       item.quantity || 1,
+          price:     Number(String(item.price).replace('R', '')),
+          vendorId:  order.vendorId,
+          vendorName: order.vendorName,
+          vendor:    { id: order.vendorId, name: order.vendorName },
+        })),
+      });
+      navigate('/payment', {
+        state: {
+          paymentId,
+          orderId,
+          amount,
+          method: 'upi',
+          items:  order.items || [],
+          showMethodSelector: true,
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Could not initiate payment. Please try again.');
     }
   };
 
@@ -103,48 +132,61 @@ const latestOrderId = orders.length > 0 ? orders[0].id : null;
   return (
     <div className="tracking-container">
 
-      {/* Header */}
       <div className="tracking-header">
         <h1>Live Order Tracking</h1>
         <p>Your orders update in real time</p>
+        <button
+          className="pay-now-btn"
+          style={{ marginTop: '10px' }}
+          onClick={() => navigate('/payment-history')}
+        >
+          💳 View Payment History
+        </button>
       </div>
 
-      {/* No orders */}
       {orders.length === 0 ? (
         <div className="empty-state">
           <h3>No orders yet</h3>
-          <p>Once you place an order, it will appear here instantly.</p>
+          <p>Once you pay for an order, it will appear here instantly.</p>
+          <button
+            className="pay-now-btn"
+            style={{ marginTop: '12px' }}
+            onClick={() => navigate('/home')}
+          >
+            🛒 Browse Menu
+          </button>
         </div>
       ) : (
         <div className="orders-grid">
-
-          {/* Loop all live orders */}
           {orders.map((order) => (
-              // Adds special styling to newest order so user instantly sees it
-              <div
-                  key={order.id}
-                  className={`order-card ${order.id === latestOrderId ? "highlight" : ""}`}
->
-
+            <div
+              key={order.id}
+              className={`order-card ${order.id === latestOrderId ? "highlight" : ""}`}
+            >
               {/* Top row */}
               <div className="order-top">
-                <h3>Order #{order.id.slice(0, 6)}</h3>
-
-                {/* Live status badge */}
+                <h3>Order #{(order.orderId || order.id).slice(0, 10)}</h3>
                 <span
                   className="status-badge"
                   style={{ backgroundColor: getStatusColor(order.status) }}
                 >
-                  {order.status}
+                  {order.status?.toUpperCase()}
                 </span>
               </div>
 
-              {/* Vendor */}
-              <p>
-              Vendor: <strong>{order.vendorName || order.vendorId}</strong>
-              </p> 
+              {/* US3: Payment status label */}
+              <p style={{
+                fontSize: '0.85rem',
+                fontWeight: '600',
+                color: getStatusColor(order.status),
+                marginBottom: '8px'
+              }}>
+                {getStatusLabel(order.status)}
+              </p>
 
-              {/* Live progress bar */}
+              <p>Vendor: <strong>{order.vendorName || order.vendorId}</strong></p>
+
+              {/* Progress bar — US3: includes "paid" step */}
               <div className="progress-bar">
                 <div
                   className="progress-fill"
@@ -152,45 +194,50 @@ const latestOrderId = orders.length > 0 ? orders[0].id : null;
                 />
               </div>
 
+              {/* Progress labels */}
+              <div style={{ display: 'flex', justifyContent: 'space-between',
+                            fontSize: '0.65rem', color: '#94a3b8', marginBottom: '10px' }}>
+                <span>Paid</span>
+                <span>Preparing</span>
+                <span>Ready</span>
+                <span>Done</span>
+              </div>
+
               {/* Items */}
               <div>
-                {order.items.map((item, index) => (
+                {(order.items || []).map((item, index) => (
                   <div key={index} className="item-row">
-                    <span>{item.name}</span>
+                    <span>{item.name} ×{item.quantity || 1}</span>
                     <span>{item.price}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Total */}
-<div className="total">
-  Total: R{order.total.toFixed(2)}
-</div>
+              <div className="total">Total: R{(order.total || 0).toFixed(2)}</div>
 
-{/* Timestamp */}
-<p className="timestamp">
-  Placed:{" "}
-  {order.createdAt?.toDate
-    ? order.createdAt.toDate().toLocaleString()
-    : "Just now"}
-</p>
+              {/* Transaction ref if available */}
+              {order.transactionRef && (
+                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>
+                  Ref: <code>{order.transactionRef}</code>
+                </p>
+              )}
 
-{/* Pay Now button for unpaid pending orders */}
-{order.status === "pending" && (
-  <button
-    className="pay-now-btn"
-    onClick={() => navigate('/checkout', {
-      state: {
-        orderId: order.id,
-        items: order.items,
-        total: order.total,
-        vendorName: order.vendorName,
-      }
-    })}
-  >
-    💳 Pay Now
-  </button>
-)}
+              <p className="timestamp">
+                Placed:{" "}
+                {order.createdAt?.toDate
+                  ? order.createdAt.toDate().toLocaleString()
+                  : "Just now"}
+              </p>
+
+              {/* US3: Pay Now only shown for legacy "pending" orders */}
+              {order.status === "pending" && (
+                <button
+                  className="pay-now-btn"
+                  onClick={() => handlePayNow(order)}
+                >
+                  💳 Pay Now
+                </button>
+              )}
             </div>
           ))}
         </div>

@@ -2,13 +2,9 @@
  * Payment Service - US5: Student Payments
  * Handles all payment operations and Firestore persistence.
  *
- * Integration strategy:
- *  - PaySnap/UPI: We construct a standard UPI URI (upi://pay?...) and render
- *    it as a QR code using the free, no-backend api.qrserver.com service.
- *    This follows exactly the same approach as the PaySnap GitHub project
- *    (github.com/jeetgoyal80/PaySnap) but without requiring a FastAPI backend.
- *  - Card / EFT / Wallet: Mock payment flow with simulated processing delay.
- *  - All payment records are persisted to the `payments` Firestore collection.
+ * US3 update: createOrderAfterPayment() creates the Firestore order
+ * ONLY after a successful payment, ensuring orders are never created
+ * without a confirmed payment.
  */
 
 import {
@@ -25,21 +21,11 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
-// ── Constants ────────────────────────────────────────────────────────────────
-
-/** Firestore collection name */
 const PAYMENTS_COLLECTION = 'payments';
-
-/** Simulated UPI merchant VPA for the campus canteen */
-const CAMPUS_UPI_VPA = 'campusfood@upi';
-
-/** Simulated processing time in ms (mock only) */
-const MOCK_PROCESSING_MS = 2500;
-
-/** Mock success rate (90 % succeed, 10 % fail — for realistic demo) */
-const MOCK_SUCCESS_RATE = 0.9;
-
-// ── Payment status enum ───────────────────────────────────────────────────────
+const ORDERS_COLLECTION   = 'orders';
+const CAMPUS_UPI_VPA      = 'campusfood@upi';
+const MOCK_PROCESSING_MS  = 2500;
+const MOCK_SUCCESS_RATE   = 0.9;
 
 export const PAYMENT_STATUS = {
   PENDING:   'pending',
@@ -49,8 +35,6 @@ export const PAYMENT_STATUS = {
   CANCELLED: 'cancelled',
 };
 
-// ── Payment method enum ───────────────────────────────────────────────────────
-
 export const PAYMENT_METHOD = {
   UPI:    'upi',
   CARD:   'card',
@@ -58,22 +42,9 @@ export const PAYMENT_METHOD = {
   WALLET: 'wallet',
 };
 
-// ── Service class ─────────────────────────────────────────────────────────────
-
 class PaymentService {
 
-  // ── UPI helpers ─────────────────────────────────────────────────────────────
-
-  /**
-   * Build a standard UPI deep-link URI.
-   * Format: upi://pay?pa=<vpa>&pn=<name>&am=<amount>&tn=<note>&cu=ZAR
-   * This is the same URI format used by PaySnap internally.
-   *
-   * @param {number} amount  - Amount in ZAR
-   * @param {string} note    - Payment note / order reference
-   * @param {string} vpa     - UPI Virtual Payment Address (defaults to campus canteen)
-   * @returns {string} UPI URI string
-   */
+  // ── UPI helpers ──────────────────────────────────────────────────────────────
   buildUpiUri(amount, note = 'Campus Food Order', vpa = CAMPUS_UPI_VPA) {
     const params = new URLSearchParams({
       pa: vpa,
@@ -85,34 +56,12 @@ class PaymentService {
     return `upi://pay?${params.toString()}`;
   }
 
-  /**
-   * Generate a QR code image URL for a UPI URI using the free qrserver.com API.
-   * No backend or API key required — identical to PaySnap's QR generation concept.
-   *
-   * @param {string} upiUri  - UPI URI from buildUpiUri()
-   * @param {number} size    - QR image size in pixels (default 220)
-   * @returns {string} Image URL that resolves to a QR code PNG
-   */
   getUpiQrUrl(upiUri, size = 220) {
     const encoded = encodeURIComponent(upiUri);
     return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}`;
   }
 
-  // ── Firestore operations ─────────────────────────────────────────────────────
-
-  /**
-   * Create a new payment record in Firestore with status "pending".
-   *
-   * @param {Object} paymentData
-   * @param {string} paymentData.userId
-   * @param {string} paymentData.userEmail
-   * @param {string} paymentData.userName
-   * @param {string} paymentData.orderId       - ID of the associated order
-   * @param {number} paymentData.amount        - Total amount in ZAR
-   * @param {string} paymentData.method        - PAYMENT_METHOD value
-   * @param {Array}  paymentData.items         - Array of { name, qty, price }
-   * @returns {Promise<string>} New payment document ID
-   */
+  // ── Payment Firestore CRUD ────────────────────────────────────────────────────
   async createPayment({ userId, userEmail, userName, orderId, amount, method, items }) {
     try {
       const docRef = await addDoc(collection(db, PAYMENTS_COLLECTION), {
@@ -137,14 +86,6 @@ class PaymentService {
     }
   }
 
-  /**
-   * Update payment status in Firestore.
-   *
-   * @param {string} paymentId
-   * @param {string} status        - PAYMENT_STATUS value
-   * @param {Object} [extra={}]    - Additional fields to merge (e.g. transactionRef)
-   * @returns {Promise<void>}
-   */
   async updatePaymentStatus(paymentId, status, extra = {}) {
     try {
       await updateDoc(doc(db, PAYMENTS_COLLECTION, paymentId), {
@@ -161,11 +102,6 @@ class PaymentService {
     }
   }
 
-  /**
-   * Fetch a single payment by ID.
-   * @param {string} paymentId
-   * @returns {Promise<Object|null>}
-   */
   async getPaymentById(paymentId) {
     try {
       const snap = await getDoc(doc(db, PAYMENTS_COLLECTION, paymentId));
@@ -176,11 +112,6 @@ class PaymentService {
     }
   }
 
-  /**
-   * Fetch all payments for a specific user, ordered by most recent first.
-   * @param {string} userId
-   * @returns {Promise<Array>}
-   */
   async getUserPayments(userId) {
     try {
       const q = query(
@@ -196,16 +127,9 @@ class PaymentService {
     }
   }
 
-  /**
-   * Fetch all payments (admin use).
-   * @returns {Promise<Array>}
-   */
   async getAllPayments() {
     try {
-      const q = query(
-        collection(db, PAYMENTS_COLLECTION),
-        orderBy('createdAt', 'desc')
-      );
+      const q = query(collection(db, PAYMENTS_COLLECTION), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch (error) {
@@ -214,22 +138,79 @@ class PaymentService {
     }
   }
 
-  // ── Mock payment processor ────────────────────────────────────────────────
-
+  // ── US3: Create order AFTER successful payment ────────────────────────────────
   /**
-   * Process a mock payment (card / EFT / wallet methods).
-   * Simulates a payment gateway: sets status to "processing", waits, then
-   * randomly succeeds or fails based on MOCK_SUCCESS_RATE.
+   * Creates Firestore order documents only after payment is confirmed.
+   * Orders start with status "paid" so vendors know payment is complete.
+   * Groups cart items by vendorId — one order document per vendor.
    *
-   * @param {string} paymentId  - Firestore payment document ID
-   * @param {Object} [cardDetails={}] - Optional card details (not stored)
-   * @returns {Promise<{ success: boolean, transactionRef: string|null, reason: string|null }>}
+   * @param {Object} params
+   * @param {string} params.paymentId
+   * @param {string} params.orderId
+   * @param {string} params.userId
+   * @param {string} params.userEmail
+   * @param {string} params.userName
+   * @param {number} params.amount
+   * @param {Array}  params.items       - Cart items with vendor info
+   * @param {string} params.transactionRef
+   * @returns {Promise<string[]>} Array of created order document IDs
    */
-  async processMockPayment(paymentId, cardDetails = {}) {
-    // Mark as processing
-    await this.updatePaymentStatus(paymentId, PAYMENT_STATUS.PROCESSING);
+  async createOrderAfterPayment({ paymentId, orderId, userId, userEmail, userName, amount, items, transactionRef }) {
+    try {
+      // Group items by vendor
+      const ordersByVendor = {};
+      items.forEach((item) => {
+        const vendorId   = item.vendor?.id || item.vendorId || 'unknown';
+        const vendorName = item.vendor?.name || item.vendorName || 'Unknown Vendor';
+        if (!ordersByVendor[vendorId]) {
+          ordersByVendor[vendorId] = { vendorId, vendorName, items: [], total: 0 };
+        }
+        const price = Number(String(item.price).replace('R', ''));
+        ordersByVendor[vendorId].items.push({
+          id:       item.id || '',
+          name:     item.name,
+          price:    item.price,
+          quantity: item.qty || item.quantity || 1,
+        });
+        ordersByVendor[vendorId].total += price * (item.qty || item.quantity || 1);
+      });
 
-    // Simulate network delay
+      const orderIds = [];
+      for (const vendorId in ordersByVendor) {
+        const group = ordersByVendor[vendorId];
+        const ref = await addDoc(collection(db, ORDERS_COLLECTION), {
+          orderId,
+          paymentId,
+          transactionRef:  transactionRef || null,
+          vendorId:        group.vendorId,
+          vendorName:      group.vendorName,
+          studentId:       userId,
+          studentEmail:    userEmail,
+          studentName:     userName || '',
+          items:           group.items,
+          total:           group.total,
+          // US3: Order starts as "paid" — not "pending"
+          // "paid"     = payment confirmed, waiting for vendor to start preparing
+          // "preparing" = vendor is making the order
+          // "ready"     = order is ready for collection
+          // "completed" = student collected the order
+          status:          'paid',
+          paymentStatus:   'paid',
+          createdAt:       serverTimestamp(),
+        });
+        orderIds.push(ref.id);
+      }
+
+      return orderIds;
+    } catch (error) {
+      console.error('Error creating order after payment:', error);
+      throw new Error('Failed to create order after payment');
+    }
+  }
+
+  // ── Mock payment processor ────────────────────────────────────────────────────
+  async processMockPayment(paymentId, cardDetails = {}) {
+    await this.updatePaymentStatus(paymentId, PAYMENT_STATUS.PROCESSING);
     await new Promise(resolve => setTimeout(resolve, MOCK_PROCESSING_MS));
 
     const success = Math.random() < MOCK_SUCCESS_RATE;
@@ -247,47 +228,22 @@ class PaymentService {
     return { success, transactionRef, reason: failureReason };
   }
 
-  /**
-   * Confirm a UPI payment manually (student clicks "I've paid" after scanning QR).
-   * In a real integration this would be verified server-side via a webhook.
-   * For mock/demo purposes we accept the user's confirmation at face value.
-   *
-   * @param {string} paymentId
-   * @returns {Promise<{ success: boolean, transactionRef: string }>}
-   */
   async confirmUpiPayment(paymentId) {
     await this.updatePaymentStatus(paymentId, PAYMENT_STATUS.PROCESSING);
     await new Promise(resolve => setTimeout(resolve, 1500));
-
     const transactionRef = `UPI-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
     await this.updatePaymentStatus(paymentId, PAYMENT_STATUS.SUCCESS, { transactionRef });
     return { success: true, transactionRef };
   }
 
-  /**
-   * Cancel a pending payment.
-   * @param {string} paymentId
-   * @returns {Promise<void>}
-   */
   async cancelPayment(paymentId) {
     await this.updatePaymentStatus(paymentId, PAYMENT_STATUS.CANCELLED);
   }
 
-  // ── Formatting helpers ───────────────────────────────────────────────────────
-
-  /**
-   * Format a ZAR amount as a currency string.
-   * @param {number} amount
-   * @returns {string}
-   */
   formatAmount(amount) {
     return `R ${Number(amount).toFixed(2)}`;
   }
 
-  /**
-   * Generate a human-readable order ID for display.
-   * @returns {string}
-   */
   generateOrderId() {
     const ts  = Date.now().toString(36).toUpperCase();
     const rnd = Math.random().toString(36).slice(2, 5).toUpperCase();
