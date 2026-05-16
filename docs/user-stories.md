@@ -72,3 +72,9 @@ As a student, I want to view my order history and spending insights, so that I c
 # User Story 1: Vendor approval email notification
 
 As a vendor, I want to receive an email when my vendor application is approved, so that I know my account has been verified and I can start using the vendor dashboard.
+
+# User Story 2: Support and order policy page
+
+As a student, I want access to a support and order policy page so that I can understand the platform’s order rules and know who to contact if I experience issues with a completed order.
+
+
