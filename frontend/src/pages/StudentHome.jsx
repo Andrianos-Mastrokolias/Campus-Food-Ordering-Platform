@@ -94,23 +94,33 @@ export default function StudentHome() {
 
   // Realtime listener — popup when order is ready
   useEffect(() => {
-    if (!user) return;
-    const ordersQuery = query(
-      collection(db, "orders"),
-      where("studentId", "==", user.uid)
-    );
-    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
-      snapshot.docs.forEach((docSnap) => {
-        const order = { id: docSnap.id, ...docSnap.data() };
-        if (order.status === "ready" && !notifiedOrders.includes(order.id)) {
-          setReadyNotification(`✅ Order #${order.id.slice(0, 6)} is ready for collection!`);
-          setNotifiedOrders((prev) => [...prev, order.id]);
-          setTimeout(() => setReadyNotification(null), 5000);
-        }
-      });
+  if (!user) return;
+
+  const ordersQuery = query(
+    collection(db, "orders"),
+    where("studentId", "==", user.uid)
+  );
+
+  const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      const order = { id: change.doc.id, ...change.doc.data() };
+
+      // ONLY trigger when status JUST changed to "ready"
+      if (
+        change.type === "modified" &&
+        order.status === "ready"
+      ) {
+        setReadyNotification(
+          `✅ Order #${order.orderId || order.id.slice(0, 6)} is ready for collection!`
+        );
+
+        setTimeout(() => setReadyNotification(null), 5000);
+      }
     });
-    return () => unsubscribe();
-  }, [user, notifiedOrders]);
+  });
+
+  return () => unsubscribe();
+}, [user]);
 
   const total = cart.reduce(
     (sum, item) => sum + Number(String(item.price).replace("R", "")),
