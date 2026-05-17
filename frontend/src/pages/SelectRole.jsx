@@ -1,158 +1,199 @@
-// Import Firestore functions to update user data in the database
+// Import Firestore functions to update user role information
 import { doc, updateDoc } from "firebase/firestore";
 
-// React Router hook for navigation between pages
-import { useNavigate } from "react-router-dom";
-
-// React hook for handling side effects
-import { useEffect } from "react";
+// Import React Router navigation utilities
+import { Navigate, useNavigate } from "react-router-dom";
 
 // Firebase database instance
 import { db } from "../firebase";
 
-// Custom authentication context (provides user info, role, status, etc.)
+// Custom authentication context
+// Provides current user, role, status, and loading state
 import { useAuth } from "../context/AuthContext";
-import "./SelectRole.css";
 
-// Component for selecting a user role after login
+// Component styling
+import "./SelectRole.css";
 export default function SelectRole() {
-  // Destructure values from authentication context
+
+  // Get authentication and role state from AuthContext
   const { user, role, status, setRole, setStatus, loading } = useAuth();
 
-  // Hook to programmatically navigate between routes
+  // Used for programmatic navigation
   const navigate = useNavigate();
 
   /**
-   * useEffect runs whenever user, role, status, or loading changes.
-   * It automatically redirects users based on their role and approval status.
-   */
-  useEffect(() => {
-    // Wait until authentication state is fully loaded
-    if (loading) return;
-
-    // If no user is logged in, do nothing
-    if (!user) return;
-
-    // Redirect students directly to their home page
-    if (role === "student") {
-      navigate("/home");
-
-    // Admin routing logic
-    } else if (role === "admin") {
-      if (status === "approved") {
-        // Approved admins go to admin dashboard
-        navigate("/admin/applications");
-      } else {
-        // Unapproved admins are blocked
-        navigate("/unauthorized");
-      }
-
-    // Vendor routing logic
-    } else if (role === "vendor") {
-      if (status === "approved") {
-        // Approved vendors go to vendor dashboard
-        navigate("/vendor/dashboard");
-      } else {
-        // Unapproved vendors are blocked
-        navigate("/unauthorized");
-      }
-    }
-  }, [user, role, status, loading, navigate]);
-
-  /**
-   * Handles role selection when user clicks a button.
-   * @param {string} selectedRole - The role chosen by the user
+   * Handles user role selection.
+   *
+   * Students immediately become students.
+   *
+   * Vendors/Admins are temporarily assigned as students
+   * until they complete their application process.
    */
   const handleSelectRole = async (selectedRole) => {
-    // Ensure a user is logged in before proceeding
+
+    // Prevent role selection if user is not logged in
     if (!user) {
       return;
     }
 
-    // Prevent users from changing roles after one is already assigned
+    // Prevent changing roles once a role already exists
     if (role) {
       return;
     }
 
     try {
-      // Reference to the user's document in Firestore
+
+      // Reference to the current user's Firestore document
       const userRef = doc(db, "users", user.uid);
 
-      // Student role selection
+      /**
+       * STUDENT ROLE
+       * Students are immediately approved and redirected.
+       */
       if (selectedRole === "student") {
-        // Save role in database
+
         await updateDoc(userRef, {
           role: "student",
           status: null,
         });
 
-        // Update local state
+        // Update local auth state
         setRole("student");
         setStatus(null);
 
-        // Redirect to student home
-        navigate("/home");
+        // Redirect student to dashboard
+        navigate("/home", { replace: true });
 
-      // Vendor role selection
+      /**
+       * VENDOR ROLE
+       * Users stay temporarily as students until vendor registration
+       * and approval are completed.
+       */
       } else if (selectedRole === "vendor") {
-        /**
-         * Users are temporarily kept as "student"
-         * until they complete the vendor application process.
-         */
+
         await updateDoc(userRef, {
           role: "student",
           status: null,
         });
 
+        // Navigate to vendor registration form
+        navigate("/register-vendor", { replace: true });
+
         setRole("student");
         setStatus(null);
 
-        // Redirect to vendor registration page
-        navigate("/register-vendor");
-
-      // Admin role selection
+      /**
+       * ADMIN ROLE
+       * Users stay temporarily as students until admin application
+       * and approval are completed.
+       */
       } else if (selectedRole === "admin") {
-        // Keep user as student so they are allowed to access /apply-admin
+
         await updateDoc(userRef, {
-           role: "student",
-           status: null,
+          role: "student",
+          status: null,
         });
 
+        // Navigate to admin application page
+        navigate("/apply-admin", { replace: true });
+
         setRole("student");
         setStatus(null);
-
-        navigate("/apply-admin");
       }
+
     } catch (error) {
+
       // Log error for debugging
       console.error("Failed to save role:", error);
 
-      // Notify user of failure
+      // Notify user
       alert("Failed to save role. Check console.");
     }
   };
 
+  /**
+   * Prevent page rendering while Firebase authentication loads.
+   * This avoids flickering between pages during login.
+   */
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  /**
+   * Redirect unauthenticated users back to login.
+   */
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  /**
+   * Existing students are redirected directly to the student dashboard.
+   */
+  if (role === "student") {
+    return <Navigate to="/home" replace />;
+  }
+
+  /**
+   * Approved vendors are redirected to the vendor dashboard.
+   */
+  if (role === "vendor" && status === "approved") {
+    return <Navigate to="/vendor/dashboard" replace />;
+  }
+
+  /**
+   * Approved admins are redirected to the admin dashboard.
+   */
+  if (role === "admin" && status === "approved") {
+    return <Navigate to="/admin/applications" replace />;
+  }
+
+  /**
+   * Unapproved vendors/admins are blocked from dashboards.
+   */
+  if ((role === "vendor" || role === "admin") && status !== "approved") {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  /**
+   * Main role selection UI
+   */
   return (
     <div className="role-container">
+
       <div className="role-card">
-        <h1 className="role-title">Choose Your Role</h1>
+
+        <h1 className="role-title">
+          Choose Your Role
+        </h1>
+
         <p className="role-subtitle">
           Select how you want to use the platform
         </p>
 
         {/* Role selection buttons */}
         <div className="role-buttons">
-          <button type="button" onClick={() => handleSelectRole("student")}>
+
+          <button
+            type="button"
+            onClick={() => handleSelectRole("student")}
+          >
             Student
           </button>
 
-          <button type="button" onClick={() => handleSelectRole("vendor")}>
+          <button
+            type="button"
+            onClick={() => handleSelectRole("vendor")}
+          >
             Vendor
           </button>
 
-          <button type="button" onClick={() => handleSelectRole("admin")}>
+          <button
+            type="button"
+            onClick={() => handleSelectRole("admin")}
+          >
             Admin
           </button>
+
         </div>
       </div>
     </div>

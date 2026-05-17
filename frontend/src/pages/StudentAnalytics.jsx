@@ -9,77 +9,136 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { exportToCSV } from "../utils/exportCSV";
 import { exportToPDF } from "../utils/exportPDF";
+
 import "./StudentAnalytics.css";
 
 export default function StudentAnalytics() {
+
+  /* -------------------------------------------------- */
+  /* AUTHENTICATED USER INFORMATION                    */
+  /* loading tracks whether Firebase auth is still     */
+  /* checking login state                              */
+  /* -------------------------------------------------- */
   const { user, loading } = useAuth();
 
+  /* -------------------------------------------------- */
+  /* STORES ALL ORDERS BELONGING TO THE CURRENT        */
+  /* STUDENT                                            */
+  /* -------------------------------------------------- */
   const [orders, setOrders] = useState([]);
+
+  /* -------------------------------------------------- */
+  /* Tracks whether analytics data is currently being   */
+  /* fetched from Firestore                            */
+  /* -------------------------------------------------- */
   const [fetching, setFetching] = useState(true);
 
+  /* -------------------------------------------------- */
+  /* FETCH STUDENT ORDERS FROM FIRESTORE               */
+  /* Runs whenever the authenticated user changes       */
+  /* -------------------------------------------------- */
   useEffect(() => {
+
     const fetchStudentOrders = async () => {
+
+      /* Wait until auth loading finishes */
       if (loading) return;
 
+      /* Stop fetching if no user exists */
       if (!user) {
           setFetching(false);
           return;
       }
 
       try {
+
         setFetching(true);
 
+        /* Reference to the orders collection */
         const ordersRef = collection(db, "orders");
 
+        /* Query only orders that belong to the current student */
         const q = query(
           ordersRef,
           where("studentId", "==", user.uid)
         );
 
+        /* Execute Firestore query */
         const snapshot = await getDocs(q);
 
+        /* Convert Firestore documents into plain JavaScript objects */
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
+        /* Save orders into component state */
         setOrders(data);
+
       } catch (error) {
+
         console.error("Error fetching student analytics:", error.message);
+
       } finally {
+
+        /* Stop loading state once fetch completes */
         setFetching(false);
       }
     };
 
     fetchStudentOrders();
+
   }, [user, loading]);
 
+  /* -------------------------------------------------- */
+  /* RETURNS A SAFE ORDER TOTAL VALUE                  */
+  /* Handles missing or differently named fields       */
+  /* -------------------------------------------------- */
   const getOrderTotal = (order) => {
     return Number(order.total ?? order.totalAmount ?? 0);
   };
 
+  /* -------------------------------------------------- */
+  /* TOTAL AMOUNT SPENT ACROSS ALL ORDERS              */
+  /* -------------------------------------------------- */
   const totalSpent = orders.reduce(
     (sum, order) => sum + getOrderTotal(order),
     0
   );
 
+  /* -------------------------------------------------- */
+  /* TOTAL NUMBER OF ORDERS PLACED                     */
+  /* -------------------------------------------------- */
   const totalOrders = orders.length;
 
+  /* -------------------------------------------------- */
+  /* AVERAGE AMOUNT SPENT PER ORDER                    */
+  /* -------------------------------------------------- */
   const averageSpend =
     totalOrders > 0 ? totalSpent / totalOrders : 0;
 
+  /* -------------------------------------------------- */
+  /* GROUPS SPENDING DATA BY DATE FOR GRAPH DISPLAY    */
+  /* useMemo prevents recalculating unless orders      */
+  /* actually change                                   */
+  /* -------------------------------------------------- */
   const spendingByDate = useMemo(() => {
+
     const grouped = {};
 
     orders.forEach((order) => {
+
+      /* Convert Firestore timestamp into readable date */
       const date = order.createdAt?.toDate
         ? order.createdAt.toDate().toISOString().split("T")[0]
         : "Unknown";
 
+      /* Create date entry if it does not exist yet */
       if (!grouped[date]) {
         grouped[date] = {
           date,
@@ -87,29 +146,44 @@ export default function StudentAnalytics() {
         };
       }
 
+      /* Add spending total for that date */
       grouped[date].spent += getOrderTotal(order);
     });
 
+    /* Sort dates chronologically */
     return Object.values(grouped).sort((a, b) =>
       a.date.localeCompare(b.date)
     );
+
   }, [orders]);
 
   const orderHistoryRows = useMemo(() => {
+
     return orders.map((order) => ({
+
       orderId: order.id,
+
       vendorId: order.vendorId || "",
+
       status: order.status || "",
+
       total: getOrderTotal(order).toFixed(2),
+
       date: order.createdAt?.toDate
         ? order.createdAt.toDate().toLocaleString()
         : "Unknown",
+
       itemCount: order.items?.length || 0,
     }));
+
   }, [orders]);
 
   if (loading || fetching) {
-    return <p className="student-analytics-loading">Loading student analytics...</p>;
+    return (
+      <p className="student-analytics-loading">
+        Loading student analytics...
+      </p>
+    );
   }
 
   return (

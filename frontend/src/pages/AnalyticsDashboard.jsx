@@ -16,24 +16,41 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+
+/* -------------------------------------------------- */
+/* FIREBASE, AUTH, EXPORTS, AND STYLING IMPORTS       */
+/* -------------------------------------------------- */
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { exportToCSV } from "../utils/exportCSV";
 import { exportToPDF } from "../utils/exportPDF";
 import "./AnalyticsDashboard.css";
 
+/* -------------------------------------------------- */
+/* VENDOR ANALYTICS DASHBOARD                 */
+/* Displays sales over time, peak ordering hours,     */
+/* custom filtered reports, and export functionality  */
+/* -------------------------------------------------- */
 export default function AnalyticsDashboard() {
+
+  /* Logged-in user, role, and authentication loading state */
   const { user, role, loading } = useAuth();
 
+  /* Stores orders fetched from Firestore */
   const [orders, setOrders] = useState([]);
 
-  // Tracks whether analytics data is still being fetched
+  /* Tracks whether analytics data is still being fetched */
   const [fetching, setFetching] = useState(true);
 
+  /* Custom report filter states */
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  /* -------------------------------------------------- */
+  /* FETCH ORDERS FROM FIRESTORE                        */
+  /* Vendors only fetch their own orders.               */                      
+  /* -------------------------------------------------- */
   useEffect(() => {
     const fetchOrders = async () => {
       if (loading || !user) return;
@@ -66,21 +83,28 @@ export default function AnalyticsDashboard() {
     fetchOrders();
   }, [user, role, loading]);
 
+  /* Converts Firestore timestamp into YYYY-MM-DD format */
   const formatDate = (createdAt) => {
     if (!createdAt?.toDate) return "Unknown";
     return createdAt.toDate().toISOString().split("T")[0];
   };
 
+  /* Converts Firestore timestamp into hour format, e.g. 13:00 */
   const formatHour = (createdAt) => {
     if (!createdAt?.toDate) return "Unknown";
     const hour = createdAt.toDate().getHours();
     return `${String(hour).padStart(2, "0")}:00`;
   };
 
+  /* Safely gets the total value from an order */
   const getOrderTotal = (order) => {
     return Number(order.total ?? order.totalAmount ?? 0);
   };
 
+  /* -------------------------------------------------- */
+  /* FILTER ORDERS FOR CUSTOM REPORT VIEW              */
+  /* Applies start date, end date, and status filters.  */
+  /* -------------------------------------------------- */
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const orderDate = order.createdAt?.toDate
@@ -106,6 +130,10 @@ export default function AnalyticsDashboard() {
     });
   }, [orders, startDate, endDate, statusFilter]);
 
+  /* -------------------------------------------------- */
+  /* SALES OVER TIME REPORT DATA                       */
+  /* Groups total sales by order date.                  */
+  /* -------------------------------------------------- */
   const salesOverTime = useMemo(() => {
     const grouped = {};
 
@@ -127,6 +155,10 @@ export default function AnalyticsDashboard() {
     );
   }, [filteredOrders]);
 
+  /* -------------------------------------------------- */
+  /* PEAK ORDERING HOURS REPORT DATA                   */
+  /* Groups number of orders by the hour placed.        */
+  /* -------------------------------------------------- */
   const peakOrderingHours = useMemo(() => {
     const grouped = {};
 
@@ -148,6 +180,10 @@ export default function AnalyticsDashboard() {
     );
   }, [filteredOrders]);
 
+  /* -------------------------------------------------- */
+  /* CUSTOM REPORT TABLE DATA                          */
+  /* Formats filtered orders into table/export rows.    */
+  /* -------------------------------------------------- */
   const customReportRows = useMemo(() => {
     return filteredOrders.map((order) => ({
       orderId: order.id,
@@ -162,16 +198,20 @@ export default function AnalyticsDashboard() {
     }));
   }, [filteredOrders]);
 
+  /* Summary card: total sales */
   const totalSales = filteredOrders.reduce(
     (sum, order) => sum + getOrderTotal(order),
     0
   );
 
+  /* Summary card: total number of orders */
   const totalOrders = filteredOrders.length;
 
+  /* Summary card: average order value */
   const averageOrderValue =
     totalOrders > 0 ? totalSales / totalOrders : 0;
 
+  /* Summary card: busiest ordering hour */
   const busiestHour =
     peakOrderingHours.length > 0
       ? peakOrderingHours.reduce((max, current) =>
@@ -179,6 +219,7 @@ export default function AnalyticsDashboard() {
         ).hour
       : "N/A";
 
+  /* Show loading message while auth or Firestore data is still loading */
   if (loading || fetching) {
     return <p className="analytics-loading">Loading analytics...</p>;
   }
@@ -316,7 +357,7 @@ export default function AnalyticsDashboard() {
               <XAxis dataKey="hour" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="orders" />
+              <Bar dataKey="orders" barSize={60} />
             </BarChart>
           </ResponsiveContainer>
         )}
