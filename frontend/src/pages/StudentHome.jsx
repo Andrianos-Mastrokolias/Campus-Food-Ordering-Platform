@@ -20,8 +20,8 @@ import "./StudentHome.css";
 import {
   ALLERGEN_OPTIONS,
   DIETARY_TAG_OPTIONS,
+  DIETARY_SOURCE_INFO,
 } from "../data/dietaryAllergenData";
-
 /**
  * StudentHome — US3 update
  *
@@ -315,6 +315,13 @@ export default function StudentHome() {
               Clear Filters
             </button>
           )}
+        </div>
+
+        {/* US3 SA Data Integration:
+            Shows students where the dietary/allergen labels come from. */}
+        <div className="dietary-source-note">
+          <strong>{DIETARY_SOURCE_INFO.title}</strong>
+          <p>{DIETARY_SOURCE_INFO.description}</p>
         </div>
 
         {vendorsWithItems.length === 0 ? (

@@ -450,3 +450,27 @@
 .clear-filter-btn:hover {
   background: #1e293b;
 }
+
+.dietary-source-note {
+  margin: -0.5rem 0 1.5rem;
+  padding: 0.85rem 1rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  color: #7c2d12;
+  font-size: 0.85rem;
+}
+
+.dietary-source-note strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.dietary-source-note p {
+  margin: 0;
+}
+
+.student-filter-panel .checkbox-option {
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+}
