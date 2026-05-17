@@ -15,7 +15,7 @@ import {
 import { db } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
 import "./StudentHome.css";
-// Standardised dietary/allergen options used to display menu item labels consistently
+//US3 Standardised dietary/allergen options used to display menu item labels consistently
 // for the Sprint 4 SA Data Integration requirement.
 import {
   ALLERGEN_OPTIONS,
@@ -41,6 +41,11 @@ export default function StudentHome() {
   const [, setLoading]         = useState(true);
   const [notifiedOrders, setNotifiedOrders]     = useState([]);
   const [readyNotification, setReadyNotification] = useState(null);
+
+  //SA Data Integration filters.
+  // Students can filter for dietary preferences and hide items containing selected allergens.
+  const [selectedDietaryFilter, setSelectedDietaryFilter] = useState("");
+  const [excludedAllergens, setExcludedAllergens] = useState([]);
 
   // Fetch menu items grouped by vendor
   useEffect(() => {
@@ -166,17 +171,53 @@ export default function StudentHome() {
     }
   };
 
-  // Converts stored dietary tag IDs from Firestore into readable labels for students.
+  //US3 Converts stored dietary tag IDs from Firestore into readable labels for students.
   // Example: "halal" becomes "Halal".
   const getDietaryLabel = (tagId) => {
     return DIETARY_TAG_OPTIONS.find((option) => option.id === tagId)?.label || tagId;
   };
 
-  // Converts stored allergen IDs from Firestore into readable labels for students.
+  //US3 Converts stored allergen IDs from Firestore into readable labels for students.
   // Example: "cow_milk" becomes "Cow's Milk".
   const getAllergenLabel = (allergenId) => {
     return ALLERGEN_OPTIONS.find((option) => option.id === allergenId)?.label || allergenId;
   };
+
+  //US3 Adds or removes allergens from the exclusion filter.
+  const handleAllergenFilterChange = (allergenId) => {
+    setExcludedAllergens((previousAllergens) =>
+      previousAllergens.includes(allergenId)
+        ? previousAllergens.filter((id) => id !== allergenId)
+        : [...previousAllergens, allergenId]
+    );
+  };
+
+  //US3 Applies the selected dietary filter and allergen exclusions to each vendor's menu.
+  // A vendor is only shown if at least one of their items matches the filters.
+  const filteredVendorsWithItems = vendorsWithItems
+  .map((vendor) => {
+    const filteredItems = vendor.items.filter((item) => {
+      const itemDietaryTags = item.dietaryTags || [];
+      const itemAllergens = item.allergens || [];
+
+      const matchesDietaryFilter =
+        selectedDietaryFilter === "" ||
+        itemDietaryTags.includes(selectedDietaryFilter);
+
+      const containsExcludedAllergen = excludedAllergens.some((allergenId) =>
+        itemAllergens.includes(allergenId)
+      );
+
+      return matchesDietaryFilter && !containsExcludedAllergen;
+    });
+
+    return {
+      ...vendor,
+      items: filteredItems,
+    };
+  })
+  .filter((vendor) => vendor.items.length > 0);
+
   return (
     <div className="student-home">
 
@@ -225,11 +266,64 @@ export default function StudentHome() {
       {/* Menu section */}
       <section className="menu-section">
         <h2>Menu by Vendor</h2>
+
+        {/* US3 SA Data Integration:
+            Students can filter items using the standardised dietary and allergen dataset. */}
+        <div className="student-filter-panel">
+          <div className="filter-group">
+            <label htmlFor="dietary-filter">Dietary preference</label>
+            <select
+              id="dietary-filter"
+              value={selectedDietaryFilter}
+              onChange={(event) => setSelectedDietaryFilter(event.target.value)}
+            >
+              <option value="">Show all dietary options</option>
+              {DIETARY_TAG_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <p>Exclude allergens</p>
+
+            <div className="checkbox-options-grid">
+              {ALLERGEN_OPTIONS.map((option) => (
+                <label key={option.id} className="checkbox-option">
+                  <input
+                    type="checkbox"
+                    checked={excludedAllergens.includes(option.id)}
+                    onChange={() => handleAllergenFilterChange(option.id)}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {(selectedDietaryFilter || excludedAllergens.length > 0) && (
+            <button
+              type="button"
+              className="clear-filter-btn"
+              onClick={() => {
+                setSelectedDietaryFilter("");
+                setExcludedAllergens([]);
+              }}
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+
         {vendorsWithItems.length === 0 ? (
           <p>No menu items available yet.</p>
+        ) : filteredVendorsWithItems.length === 0 ? (
+          <p>No menu items match your selected dietary/allergen filters.</p>
         ) : (
           <div className="vendor-menu-list">
-            {vendorsWithItems.map((vendor) => (
+            {filteredVendorsWithItems.map((vendor) => (
               <div key={vendor.vendorId} className="vendor-menu-section">
                 <div className="vendor-menu-header">
                   <h3>{vendor.vendorName}</h3>
@@ -247,7 +341,7 @@ export default function StudentHome() {
                         <p>{item.description}</p>
                         <p><strong>{item.price}</strong></p>
 
-                        {/*SA Data Integration:
+                        {/*US3 Data Integration:
                             Display standardised dietary and allergen information so students can make safer food choices. */}
                         {item.dietaryTags?.length > 0 && (
                           <div className="tag-section">

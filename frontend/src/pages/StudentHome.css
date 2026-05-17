@@ -408,3 +408,45 @@
   color: red;
   font-weight: bold;
 }
+
+.student-filter-panel {
+  margin: 1rem 0 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.filter-group {
+  margin-bottom: 1rem;
+}
+
+.filter-group label,
+.filter-group p {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.filter-group select {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.65rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.clear-filter-btn {
+  padding: 0.55rem 1rem;
+  background: #334155;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.clear-filter-btn:hover {
+  background: #1e293b;
+}
