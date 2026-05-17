@@ -11,50 +11,44 @@ import {
   where,
   serverTimestamp,
 } from "firebase/firestore";
+import { Link } from "react-router-dom";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import LogoutButton from "../components/LogoutButton";
-import "../App.css";
-import { Link } from "react-router-dom";
 import notificationService from "../services/notificationService";
+
+// --------------------------------------------------
+// DIETARY + ALLERGEN DATA
+// Standardised food metadata used across the system.
+// --------------------------------------------------
 import {
   ALLERGEN_OPTIONS,
   DIETARY_TAG_OPTIONS,
 } from "../data/dietaryAllergenData";
-// ------------------------------------------------------
-// ORDER STATUS FLOW
-// This defines the valid order status progression.
-// Vendors should move orders forward through these stages
-// so students see a consistent tracking flow.
-// ------------------------------------------------------
-// US3: Orders now start as "paid" — confirmed payment required before preparation
-const ORDER_STATUS_FLOW = [
-  "paid",
-  "preparing",
-  "ready",
-  "completed"
-];
+import "../App.css";
+import "./VendorDashboard.css";
+
+const ORDER_STATUS_FLOW = ["paid", "preparing", "ready", "completed"];
 
 export default function VendorDashboard() {
-  // Auth context gives access to the logged-in user, their role, and loading state
   const { user, role, loading } = useAuth();
 
-  // Stores the logged-in vendor's approved business profile
-  // This allows the dashboard heading to show the actual vendor name and description
+
+ // --------------------------------------------------
+ // COMPONENT STATE
+ // Stores vendor profile information, menu items,
+ // orders, modal state, and form data.
+ // --------------------------------------------------
+
   const [vendorProfile, setVendorProfile] = useState(null);
-
-  // Stores all menu items that belong to the logged-in vendor
   const [menuItems, setMenuItems] = useState([]);
-
-  // Stores all orders that belong to the logged-in vendor
   const [vendorOrders, setVendorOrders] = useState([]);
-
-  // Stores a preview of the image pasted into the form.
-  // This does not save anything yet; it only helps us test the paste feature safely.
   const [imagePreview, setImagePreview] = useState("");
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showCompleted, setShowCompleted] = useState(false);
 
-  // Stores the current values entered in the menu item form
-  // stock keeps track of how many units of the item are available
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -66,30 +60,6 @@ export default function VendorDashboard() {
     dietaryTags: [],
   });
 
-  // Stores the ID of the item currently being edited
-  // If null, the form is being used to add a new item
-  const [editingItemId, setEditingItemId] = useState(null);
-
-  // Controls whether the vendor change request form is shown
-  const [showChangeRequestForm, setShowChangeRequestForm] = useState(false);
-
-  // Stores the vendor's requested updated business details
-  const [changeRequestData, setChangeRequestData] = useState({
-    businessName: "",
-    businessDescription: "",
-    businessPhone: "",
-    businessAddress: "",
-    businessType: "",
-  });
-
-  // Controls whether the edit modal popup is visible
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // Stores the item currently being edited inside the modal
-  const [selectedItem, setSelectedItem] = useState(null);
-
-  // Fetch the logged-in vendor's profile from the users collection
-  // Vendor profile details were saved when the admin approved the vendor application
   useEffect(() => {
     const fetchVendorProfile = async () => {
       if (loading || !user || role !== "vendor") return;
@@ -110,8 +80,11 @@ export default function VendorDashboard() {
     fetchVendorProfile();
   }, [user, role, loading]);
 
-  // Fetch all menu items that belong to the logged-in vendor
-  // This ensures each vendor only sees and manages their own menu
+  // --------------------------------------------------
+  // FETCH MENU ITEMS
+  // Loads all menu items created by this vendor.
+  // --------------------------------------------------
+
   useEffect(() => {
     const fetchMenuItems = async () => {
       if (loading || !user || role !== "vendor") return;
@@ -121,7 +94,6 @@ export default function VendorDashboard() {
         const q = query(menuItemsRef, where("vendorId", "==", user.uid));
         const querySnapshot = await getDocs(q);
 
-        // Convert Firestore documents into normal JavaScript objects
         const items = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
@@ -136,31 +108,20 @@ export default function VendorDashboard() {
     fetchMenuItems();
   }, [user, role, loading]);
 
-  // Fetch all orders that belong to the logged-in vendor
-  // Vendors can see their incoming orders
   useEffect(() => {
     const fetchVendorOrders = async () => {
       if (loading || !user || role !== "vendor") return;
 
       try {
-        // Reference the orders collection in Firestore
         const ordersRef = collection(db, "orders");
-
-        // Query only the orders that belong to this vendor
-        const q = query(
-          ordersRef,
-          where("vendorId", "==", user.uid)
-        );
-
+        const q = query(ordersRef, where("vendorId", "==", user.uid));
         const querySnapshot = await getDocs(q);
 
-        // Convert Firestore documents into normal JavaScript objects
         const orders = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
-        // Save the vendor's orders into state so they can be displayed
         setVendorOrders(orders);
       } catch (error) {
         console.error("Error fetching vendor orders:", error.message);
@@ -216,110 +177,117 @@ const reduceStockForOrderItems = async (orderItems) => {
   }
 };
 
-// Updates an order status in Firestore.
-// If the order becomes ready, stock is reduced and a notification is sent to the student.
-const updateOrderStatus = async (orderId, newStatus) => {
-  try {
-    const orderRef = doc(db, "orders", orderId);
-    const selectedOrder = vendorOrders.find((order) => order.id === orderId);
+  // --------------------------------------------------
+  // UPDATE ORDER STATUS
+  // Updates order progress and sends email
+  // notifications when an order becomes ready.
+  // --------------------------------------------------
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const orderRef = doc(db, "orders", orderId);
+      const selectedOrder = vendorOrders.find((order) => order.id === orderId);
 
-    const shouldDeductStock =
-      selectedOrder &&
-      !selectedOrder.stockDeducted &&
-      (newStatus === "ready" || newStatus === "completed");
+      const shouldDeductStock =
+        selectedOrder &&
+        !selectedOrder.stockDeducted &&
+        (newStatus === "ready" || newStatus === "completed");
 
-    if (shouldDeductStock) {
-      await reduceStockForOrderItems(selectedOrder.items || []);
-    }
-
-    const orderUpdate = {
-      status: newStatus,
-    };
-
-    if (shouldDeductStock) {
-      orderUpdate.stockDeducted = true;
-      orderUpdate.stockDeductedAt = serverTimestamp();
-    }
-
-    await updateDoc(orderRef, orderUpdate);
-
-    // Trigger real EmailJS notification when the vendor marks an order as ready.
-    // Email failure is handled separately so the order status still updates successfully.
-    if (newStatus === "ready" && selectedOrder) {
-      try {
-        await notificationService.sendOrderReadyEmail({
-          ...selectedOrder,
-          status: newStatus,
-        });
-      } catch (emailError) {
-        console.error("Order status updated, but email notification failed:", emailError);
+      if (shouldDeductStock) {
+        await reduceStockForOrderItems(selectedOrder.items || []);
       }
+
+      const orderUpdate = {
+        status: newStatus,
+      };
+
+      if (shouldDeductStock) {
+        orderUpdate.stockDeducted = true;
+        orderUpdate.stockDeductedAt = serverTimestamp();
+      }
+
+      // Update order status in Firestore
+      await updateDoc(orderRef, orderUpdate);
+
+      // Send notification when order is ready
+      if (newStatus === "ready" && selectedOrder) {
+        try {
+          await notificationService.sendOrderReadyEmail({
+            ...selectedOrder,
+            status: newStatus,
+          });
+        } catch (emailError) {
+          console.error(
+            "Order status updated, but email notification failed:",
+            emailError
+          );
+        }
+      }
+
+      // Update local order state
+      setVendorOrders((previousOrders) =>
+        previousOrders.map((order) =>
+          order.id === orderId
+            ? {
+                ...order,
+                status: newStatus,
+                ...(shouldDeductStock ? { stockDeducted: true } : {}),
+              }
+            : order
+        )
+      );
+    } catch (error) {
+      console.error("Error updating order status:", error.message);
     }
+  };
 
-    setVendorOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              status: newStatus,
-              ...(shouldDeductStock ? { stockDeducted: true } : {}),
-            }
-          : order
-      )
-    );
-  } catch (error) {
-    console.error("Error updating order status or stock:", error.message);
-    alert("Could not update order status or stock. Please try again.");
-  }
-};
-
+  // Handles pasted images inside the menu item form
   // Handles when a user pastes an image (Cmd+V / Ctrl+V)
   // Converts the image into base64 and stores it for preview
   const handleImagePaste = (event) => {
     const items = event.clipboardData.items;
-  
+
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-  
+
       if (item.type.includes("image")) {
         const file = item.getAsFile();
+        // FileReader is used to read the image file as base64
         const reader = new FileReader();
-  
+
         reader.onload = (e) => {
           const img = new Image();
-  
+          
+          // Runs once the image has loaded into memory
           img.onload = () => {
+            // Create a canvas to resize/compress the image
             const canvas = document.createElement("canvas");
-  
-            // Resize pasted image so Firestore can store it safely
+
             canvas.width = 400;
             canvas.height = 300;
-  
+
             const ctx = canvas.getContext("2d");
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  
-            // Compress image into smaller JPEG base64
+
             const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
-  
+
             setImagePreview(compressedBase64);
-  
+
             setFormData((previousFormData) => ({
               ...previousFormData,
               photoUrl: compressedBase64,
             }));
           };
-  
+          
+          // Start loading image from FileReader result
           img.src = e.target.result;
         };
-  
+
         reader.readAsDataURL(file);
         return;
       }
     }
   };
 
-  // Handles all form input changes
-  // Converts checkboxes to booleans and number inputs to numbers
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
 
@@ -334,7 +302,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }));
   };
 
-  // Handles checkbox selection for allergen and dietary tag arrays.
   const handleMultiSelectChange = (fieldName, optionId) => {
     setFormData((previousFormData) => {
       const currentValues = previousFormData[fieldName] || [];
@@ -350,8 +317,21 @@ const updateOrderStatus = async (orderId, newStatus) => {
     });
   };
 
-  // Handles adding a new menu item or updating an existing one
-  // Also validates that required fields are filled in correctly
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      photoUrl: "",
+      stock: 1,
+      available: true,
+      allergens: [],
+      dietaryTags: [],
+    });
+
+    setImagePreview("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -359,33 +339,27 @@ const updateOrderStatus = async (orderId, newStatus) => {
     const trimmedDescription = formData.description.trim();
     const trimmedPrice = formData.price.trim();
 
-    // Validation: item name must not be empty
     if (!trimmedName) {
       alert("Please enter an item name.");
       return;
     }
 
-    // Validation: description must not be empty
     if (!trimmedDescription) {
       alert("Please enter an item description.");
       return;
     }
 
-    // Validation: price must not be empty
     if (!trimmedPrice) {
       alert("Please enter a price.");
       return;
     }
 
-    // Validation: stock cannot be negative
     if (formData.stock < 0) {
       alert("Stock cannot be negative.");
       return;
     }
 
     if (editingItemId !== null) {
-      // Update an existing menu item in Firestore
-      // Stock is saved and availability is derived from stock
       const updatedMenuItem = {
         name: trimmedName,
         description: trimmedDescription,
@@ -402,7 +376,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
         await updateDoc(itemRef, updatedMenuItem);
 
-        // Update local state so the UI reflects the latest item values immediately
         setMenuItems((previousMenuItems) =>
           previousMenuItems.map((item) =>
             item.id === editingItemId
@@ -414,13 +387,11 @@ const updateOrderStatus = async (orderId, newStatus) => {
         setEditingItemId(null);
         setSelectedItem(null);
         setIsEditModalOpen(false);
-        setImagePreview("");
+        resetForm();
       } catch (error) {
         console.error("Error updating menu item:", error.message);
       }
     } else {
-      // Create a new menu item for this vendor
-      // If stock is 0, the item is automatically marked as sold out
       const newMenuItem = {
         vendorId: user.uid,
         name: trimmedName,
@@ -439,30 +410,14 @@ const updateOrderStatus = async (orderId, newStatus) => {
             ...previousMenuItems,
             { id: docRef.id, ...newMenuItem },
           ]);
+          resetForm();
         })
         .catch((error) => {
           console.error("Error adding menu item:", error.message);
         });
     }
+  };
 
-    // Reset the form back to its default state after submitting
-    setFormData({
-      name: "",
-      description: "",
-      price: "",
-      photoUrl: "",
-      stock: 1,
-      available: true,
-      allergens: [],
-      dietaryTags: [],
-    });
-
-    setImagePreview("");
-    };
-
-  // Toggle stock-based availability
-  // If stock is above 0, set it to 0 to mark as sold out
-  // If stock is 0, restore it to 1 to mark as available again
   const toggleAvailability = async (id) => {
     const selectedItem = menuItems.find((item) => item.id === id);
 
@@ -479,7 +434,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
         available: newAvailability,
       });
 
-      // Update local state immediately after Firestore update
       setMenuItems((previousMenuItems) =>
         previousMenuItems.map((item) =>
           item.id === id
@@ -492,8 +446,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }
   };
 
-  // Deletes a menu item from Firestore and removes it from the dashboard immediately
-  // A confirmation message is shown first to prevent accidental deletion
   const handleDeleteItem = async (id, itemName) => {
     const confirmDelete = window.confirm(
       `Are you sure you want to delete "${itemName}"?`
@@ -506,7 +458,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
       await deleteDoc(itemRef);
 
-      // Remove deleted item from local state so the UI updates without refreshing
       setMenuItems((previousMenuItems) =>
         previousMenuItems.filter((item) => item.id !== id)
       );
@@ -516,9 +467,6 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }
   };
 
-  // Load the selected item's current values into the form
-  // This allows the vendor to edit an existing menu item
-  // Opens the edit modal and loads the selected item's details into the form
   const handleEditClick = (item) => {
     setSelectedItem(item);
 
@@ -538,65 +486,123 @@ const updateOrderStatus = async (orderId, newStatus) => {
     setIsEditModalOpen(true);
   };
 
-  // Cancel edit mode and reset the form back to default values
-  // Closes the edit modal and clears edit-related state
   const handleCancelEdit = () => {
     setEditingItemId(null);
     setSelectedItem(null);
     setIsEditModalOpen(false);
-
-    setFormData({
-      name: "",
-      description: "",
-      price: "",
-      photoUrl: "",
-      stock: 1,
-      available: true,
-      allergens: [],
-      dietaryTags: [],
-    });
-
-    setImagePreview("");
+    resetForm();
   };
 
-
-  // While authentication is still loading, show a loading message
   if (loading) {
     return <p style={{ textAlign: "center", marginTop: "80px" }}>Loading...</p>;
   }
 
-  // Helper function to check whether an order was created today
-  const isToday = (timestamp) => {
-    if (!timestamp?.toDate) return false;
+  const sortedOrders = [...vendorOrders].sort(
+    (a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+  );
 
-    const orderDate = timestamp.toDate();
-    const today = new Date();
+  const latestOrderId = sortedOrders.length > 0 ? sortedOrders[0].id : null;
 
+  const groupedOrders = {
+    paid: [],
+    preparing: [],
+    ready: [],
+    completed: [],
+  };
+
+  sortedOrders.forEach((order) => {
+    if (groupedOrders[order.status]) {
+      groupedOrders[order.status].push(order);
+    }
+  });
+
+  const getDietaryLabel = (tagId) => {
     return (
-      orderDate.getFullYear() === today.getFullYear() &&
-      orderDate.getMonth() === today.getMonth() &&
-      orderDate.getDate() === today.getDate()
+      DIETARY_TAG_OPTIONS.find((option) => option.id === tagId)?.label || tagId
     );
   };
 
-  // Active orders show at the top
-  const activeOrders = vendorOrders.filter(
-    (order) => order.status !== "completed"
-  );
-
-  // Completed orders only show if they were created today.
-  // Older completed orders are hidden from the vendor dashboard.
-  const completedOrders = vendorOrders.filter(
-    (order) => order.status === "completed" && isToday(order.createdAt)
-  );
-
-  const getDietaryLabel = (tagId) => {
-    return DIETARY_TAG_OPTIONS.find((option) => option.id === tagId)?.label || tagId;
-  };
-  
   const getAllergenLabel = (allergenId) => {
-    return ALLERGEN_OPTIONS.find((option) => option.id === allergenId)?.label || allergenId;
+    return (
+      ALLERGEN_OPTIONS.find((option) => option.id === allergenId)?.label ||
+      allergenId
+    );
   };
+
+  const activeOrderCount =
+    groupedOrders.paid.length +
+    groupedOrders.preparing.length +
+    groupedOrders.ready.length;
+
+  const renderVendorOrderCard = (order) => (
+    <div
+      key={order.id}
+      className={`
+        order-card
+        ${order.id === latestOrderId ? "highlight latest-order-card" : ""}
+        ${order.status === "ready" ? "ready-card" : ""}
+      `}
+    >
+      <div className="order-card-top">
+        <h3>Order #{order.orderId?.slice(0, 10) || order.id.slice(0, 6)}</h3>
+
+        <span className={`order-status-label status-${order.status}`}>
+          {order.status?.toUpperCase()}
+        </span>
+      </div>
+
+      <p className="paid-badge">💰 Payment Confirmed</p>
+
+      <p className="order-info">
+        <strong>Student:</strong> #{order.studentId?.slice(0, 6)}
+      </p>
+
+      {order.orderId && (
+        <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+          Shared Order ID: {order.orderId}
+        </p>
+      )}
+
+      {order.vendorOrderId && (
+        <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+          Vendor Order ID: {order.vendorOrderId}
+        </p>
+      )}
+
+      <label className="order-label">Update Status</label>
+
+      <select
+        value={order.status}
+        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+        className="order-status-select"
+      >
+        {ORDER_STATUS_FLOW.map((statusOption) => (
+          <option
+            key={statusOption}
+            value={statusOption}
+            disabled={
+              ORDER_STATUS_FLOW.indexOf(statusOption) <
+              ORDER_STATUS_FLOW.indexOf(order.status)
+            }
+          >
+            {statusOption.toUpperCase()}
+          </option>
+        ))}
+      </select>
+
+      <p className="order-total">Total: R{(order.total || 0).toFixed(2)}</p>
+
+      <div className="order-items">
+        <strong>Items</strong>
+
+        {(order.items || []).map((item, index) => (
+          <p key={index}>
+            {item.name} × {item.quantity}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="app">
@@ -607,21 +613,16 @@ const updateOrderStatus = async (orderId, newStatus) => {
             "Manage your food items, prices, descriptions, and availability."}
         </p>
       </header>
-      
-      <div
-          className="analytics-btn-container"
-          style={{ textAlign: "center" }}
-        >
-          <Link to="/vendor/analytics">
-            <button type="button" className="analytics-dashboard-btn">
-              📈 View Analytics 
-            </button>
-          </Link>
-        </div>
 
-  
+      <div className="analytics-btn-container" style={{ textAlign: "center" }}>
+        <Link to="/vendor/analytics">
+          <button type="button" className="analytics-dashboard-btn">
+            📈 View Analytics
+          </button>
+        </Link>
+      </div>
+
       <main className="vendor-dashboard-layout">
-        {/* TOP SECTION: Incoming Orders */}
         <section className="orders-section">
           <div className="orders-header">
             <div>
@@ -629,129 +630,63 @@ const updateOrderStatus = async (orderId, newStatus) => {
               <p>Manage and update student orders</p>
             </div>
 
-            <span className="order-count">{activeOrders.length} active</span>
+            <span className="order-count">{activeOrderCount} active</span>
           </div>
 
-          {activeOrders.length === 0 ? (
-            <p>No active orders right now.</p>
-          ) : (
-            <div className="orders-row">
-              {activeOrders.map((order) => (
-                <div className="order-card" key={order.id}>
-                  <div className="order-card-top">
-                    <h3>
-                      Order #{order.orderId?.slice(0, 10) || order.id.slice(0, 6)}
-                    </h3>
-                    <span className={`order-status-label status-${order.status}`}>
-                      {order.status}
-                    </span>
-                  </div>
-
-                  {/* US3: Payment confirmed badge */}
-                  <p style={{
-                    fontSize: '0.78rem', fontWeight: '700', color: '#065f46',
-                    marginBottom: '6px', background: '#dcfce7',
-                    padding: '3px 10px', borderRadius: '4px', display: 'inline-block'
-                  }}>
-                    💰 Payment Confirmed
-                  </p>
-
-                  <p className="order-info">
-                    <strong>Student:</strong> #{order.studentId.slice(0, 6)}
-                  </p>
-                  {/* debugging purposes*/}
-                  <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-                    Shared Order ID: {order.orderId}
-                  </p>
-
-                  <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-                    Vendor Order ID: {order.vendorOrderId}
-                  </p>
-
-
-                  <label className="order-label">Update Status</label>
-                  <select
-                    value={order.status}
-                    onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                    className="order-status-select"
-                  >
-                    {ORDER_STATUS_FLOW.map((statusOption) => (
-                      <option
-                        key={statusOption}
-                        value={statusOption}
-                        disabled={
-                          ORDER_STATUS_FLOW.indexOf(statusOption) <
-                          ORDER_STATUS_FLOW.indexOf(order.status)
-                        }
-                      >
-                        {statusOption.toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
-
-                  <p className="order-total">
-                    Total: R{order.total.toFixed(2)}
-                  </p>
-
-                  <div className="order-items">
-                    <strong>Items</strong>
-                    {order.items.map((item, index) => (
-                      <p key={index}>
-                        {item.name} × {item.quantity}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* COMPLETED ORDERS */}
-          {completedOrders.length > 0 && (
-            <div className="completed-orders-section">
-              <h3>Completed Orders</h3>
-
+          {groupedOrders.ready.length > 0 && (
+            <div className="order-section">
+              <h2>🔔 Ready</h2>
               <div className="orders-row">
-                {completedOrders.map((order) => (
-                  <div className="order-card completed-order-card" key={order.id}>
-                    <div className="order-card-top">
-                      <h3>Order {order.dailyOrderNumber || `#${order.id.slice(0, 6)}`}</h3>
-
-                      <span className="order-status-label status-completed">
-                        COMPLETED
-                      </span>
-                    </div>
-
-                    <p className="order-info">
-                      <strong>Student:</strong> #{order.studentId.slice(0, 6)}
-                    </p>
-
-                    <p className="order-total">
-                      Total: R{order.total.toFixed(2)}
-                    </p>
-
-                    <div className="order-items">
-                      <strong>Items</strong>
-
-                      {order.items.map((item, index) => (
-                        <p key={index}>
-                          {item.name} × {item.quantity}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                {groupedOrders.ready.map(renderVendorOrderCard)}
               </div>
             </div>
           )}
+
+          {groupedOrders.preparing.length > 0 && (
+            <div className="order-section">
+              <h2>👨‍🍳 Preparing</h2>
+              <div className="orders-row">
+                {groupedOrders.preparing.map(renderVendorOrderCard)}
+              </div>
+            </div>
+          )}
+
+          {groupedOrders.paid.length > 0 && (
+            <div className="order-section">
+              <h2>🟡 Paid</h2>
+              <div className="orders-row">
+                {groupedOrders.paid.map(renderVendorOrderCard)}
+              </div>
+            </div>
+          )}
+
+          {activeOrderCount === 0 && <p>No active orders right now.</p>}
+
+          {groupedOrders.completed.length > 0 && (
+            <div className="completed-orders-section">
+              <button
+                type="button"
+                className="completed-toggle-btn"
+                onClick={() => setShowCompleted(!showCompleted)}
+              >
+                {showCompleted
+                  ? "Hide Completed Orders"
+                  : `View Completed Orders (${groupedOrders.completed.length})`}
+              </button>
+
+              {showCompleted && (
+                <div className="orders-row">
+                  {groupedOrders.completed.map(renderVendorOrderCard)}
+                </div>
+              )}
+            </div>
+          )}
         </section>
-  
-        {/* BOTTOM SECTION: Form and Menu side by side */}
+
         <div className="dashboard-grid">
-          {/* LEFT: Add/Edit Menu Form */}
           <section className="form-section">
             <h2>{editingItemId !== null ? "Edit Menu Item" : "Add Menu Item"}</h2>
-  
+
             <form
               className="menu-form"
               onSubmit={handleSubmit}
@@ -764,14 +699,14 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 value={formData.name}
                 onChange={handleInputChange}
               />
-  
+
               <textarea
                 name="description"
                 placeholder="Item description"
                 value={formData.description}
                 onChange={handleInputChange}
               ></textarea>
-  
+
               <input
                 type="text"
                 name="price"
@@ -779,7 +714,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 value={formData.price}
                 onChange={handleInputChange}
               />
-  
+
               <input
                 type="number"
                 name="stock"
@@ -788,7 +723,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 onChange={handleInputChange}
                 min="0"
               />
-  
+
               <input
                 type="text"
                 name="photoUrl"
@@ -799,15 +734,21 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
               <div className="checkbox-group-section">
                 <h4>Dietary Tags</h4>
-                <p className="helper-text">Select all dietary labels that apply to this item.</p>
+                <p className="helper-text">
+                  Select all dietary labels that apply to this item.
+                </p>
 
                 <div className="checkbox-options-grid">
                   {DIETARY_TAG_OPTIONS.map((option) => (
                     <label key={option.id} className="checkbox-option">
                       <input
                         type="checkbox"
-                        checked={(formData.dietaryTags || []).includes(option.id)}
-                        onChange={() => handleMultiSelectChange("dietaryTags", option.id)}
+                        checked={(formData.dietaryTags || []).includes(
+                          option.id
+                        )}
+                        onChange={() =>
+                          handleMultiSelectChange("dietaryTags", option.id)
+                        }
                       />
                       {option.label}
                     </label>
@@ -817,7 +758,9 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
               <div className="checkbox-group-section">
                 <h4>Allergens</h4>
-                <p className="helper-text">Select allergens that the item contains or may contain.</p>
+                <p className="helper-text">
+                  Select allergens that the item contains or may contain.
+                </p>
 
                 <div className="checkbox-options-grid">
                   {ALLERGEN_OPTIONS.map((option) => (
@@ -825,14 +768,16 @@ const updateOrderStatus = async (orderId, newStatus) => {
                       <input
                         type="checkbox"
                         checked={(formData.allergens || []).includes(option.id)}
-                        onChange={() => handleMultiSelectChange("allergens", option.id)}
+                        onChange={() =>
+                          handleMultiSelectChange("allergens", option.id)
+                        }
                       />
                       {option.label}
                     </label>
                   ))}
                 </div>
               </div>
-  
+
               {imagePreview && (
                 <div style={{ marginTop: "10px", textAlign: "center" }}>
                   <p>Image preview:</p>
@@ -848,7 +793,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                   />
                 </div>
               )}
-  
+
               <label className="checkbox-row">
                 <input
                   type="checkbox"
@@ -858,12 +803,12 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 />
                 Available
               </label>
-  
+
               <div className="form-buttons">
                 <button type="submit">
                   {editingItemId !== null ? "Update Item" : "Add Item"}
                 </button>
-  
+
                 {editingItemId !== null && (
                   <button
                     type="button"
@@ -876,11 +821,10 @@ const updateOrderStatus = async (orderId, newStatus) => {
               </div>
             </form>
           </section>
-  
-          {/* RIGHT: Current Menu */}
+
           <section className="menu-section">
             <h2>Current Menu</h2>
-  
+
             <div className="menu-list">
               {menuItems.map((item) => (
                 <div className="menu-card" key={item.id}>
@@ -895,10 +839,11 @@ const updateOrderStatus = async (orderId, newStatus) => {
                       Image not available yet
                     </div>
                   )}
-  
+
                   <h3>{item.name}</h3>
                   <p>{item.description}</p>
                   <p className="price">{item.price}</p>
+
                   {item.dietaryTags?.length > 0 && (
                     <div className="tag-section">
                       <strong>Dietary:</strong>
@@ -924,11 +869,11 @@ const updateOrderStatus = async (orderId, newStatus) => {
                       </div>
                     </div>
                   )}
-  
+
                   <p>
                     <strong>Stock:</strong> {item.stock ?? 0}
                   </p>
-  
+
                   <p
                     className={
                       (item.stock ?? 0) > 0
@@ -938,7 +883,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                   >
                     {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
                   </p>
-  
+
                   <div className="button-row">
                     <button
                       className="edit-btn"
@@ -947,7 +892,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                     >
                       Edit
                     </button>
-  
+
                     <button
                       className="soldout-btn"
                       type="button"
@@ -957,7 +902,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
                         ? "Mark as Sold Out"
                         : "Mark as Available"}
                     </button>
-  
+
                     <button
                       className="delete-btn"
                       type="button"
@@ -973,18 +918,27 @@ const updateOrderStatus = async (orderId, newStatus) => {
           </section>
         </div>
       </main>
-      {/* Edit modal popup for updating existing menu items */}
+
       {isEditModalOpen && selectedItem && (
         <div className="modal-overlay" onClick={handleCancelEdit}>
           <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Edit Menu Item</h2>
-              <button type="button" className="modal-close-btn" onClick={handleCancelEdit}>
+
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={handleCancelEdit}
+              >
                 ×
               </button>
             </div>
 
-            <form className="menu-form" onSubmit={handleSubmit} onPaste={handleImagePaste}>
+            <form
+              className="menu-form"
+              onSubmit={handleSubmit}
+              onPaste={handleImagePaste}
+            >
               <input
                 type="text"
                 name="name"
@@ -1027,15 +981,21 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
               <div className="checkbox-group-section">
                 <h4>Dietary Tags</h4>
-                <p className="helper-text">Select all dietary labels that apply to this item.</p>
+                <p className="helper-text">
+                  Select all dietary labels that apply to this item.
+                </p>
 
                 <div className="checkbox-options-grid">
                   {DIETARY_TAG_OPTIONS.map((option) => (
                     <label key={option.id} className="checkbox-option">
                       <input
                         type="checkbox"
-                        checked={(formData.dietaryTags || []).includes(option.id)}
-                        onChange={() => handleMultiSelectChange("dietaryTags", option.id)}
+                        checked={(formData.dietaryTags || []).includes(
+                          option.id
+                        )}
+                        onChange={() =>
+                          handleMultiSelectChange("dietaryTags", option.id)
+                        }
                       />
                       {option.label}
                     </label>
@@ -1045,7 +1005,9 @@ const updateOrderStatus = async (orderId, newStatus) => {
 
               <div className="checkbox-group-section">
                 <h4>Allergens</h4>
-                <p className="helper-text">Select allergens that the item contains or may contain.</p>
+                <p className="helper-text">
+                  Select allergens that the item contains or may contain.
+                </p>
 
                 <div className="checkbox-options-grid">
                   {ALLERGEN_OPTIONS.map((option) => (
@@ -1053,7 +1015,9 @@ const updateOrderStatus = async (orderId, newStatus) => {
                       <input
                         type="checkbox"
                         checked={(formData.allergens || []).includes(option.id)}
-                        onChange={() => handleMultiSelectChange("allergens", option.id)}
+                        onChange={() =>
+                          handleMultiSelectChange("allergens", option.id)
+                        }
                       />
                       {option.label}
                     </label>
@@ -1064,6 +1028,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
               {imagePreview && (
                 <div style={{ marginTop: "10px", textAlign: "center" }}>
                   <p>Image preview:</p>
+
                   <img
                     src={imagePreview}
                     alt="Preview"
@@ -1088,7 +1053,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
               </label>
 
               <div className="form-buttons">
-              <button type="submit">Update Item</button>
+                <button type="submit">Update Item</button>
 
                 <button
                   type="button"
@@ -1101,10 +1066,7 @@ const updateOrderStatus = async (orderId, newStatus) => {
             </form>
           </div>
         </div>
-      )}
-      <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-        <LogoutButton />
-      </div>
+            )}
     </div>
   );
 }
