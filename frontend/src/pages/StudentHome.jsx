@@ -15,6 +15,12 @@ import {
 import { db } from "../firebase";
 import { Link, useNavigate } from "react-router-dom";
 import "./StudentHome.css";
+// Standardised dietary/allergen options used to display menu item labels consistently
+// for the Sprint 4 SA Data Integration requirement.
+import {
+  ALLERGEN_OPTIONS,
+  DIETARY_TAG_OPTIONS,
+} from "../data/dietaryAllergenData";
 
 /**
  * StudentHome — US3 update
@@ -160,6 +166,17 @@ export default function StudentHome() {
     }
   };
 
+  // Converts stored dietary tag IDs from Firestore into readable labels for students.
+  // Example: "halal" becomes "Halal".
+  const getDietaryLabel = (tagId) => {
+    return DIETARY_TAG_OPTIONS.find((option) => option.id === tagId)?.label || tagId;
+  };
+
+  // Converts stored allergen IDs from Firestore into readable labels for students.
+  // Example: "cow_milk" becomes "Cow's Milk".
+  const getAllergenLabel = (allergenId) => {
+    return ALLERGEN_OPTIONS.find((option) => option.id === allergenId)?.label || allergenId;
+  };
   return (
     <div className="student-home">
 
@@ -227,9 +244,38 @@ export default function StudentHome() {
                         <div className="student-menu-placeholder">Image not available yet</div>
                       )}
                       <h4>{item.name}</h4>
-                      <p>{item.description}</p>
-                      <p><strong>{item.price}</strong></p>
-                      <p className={(item.stock ?? 0) > 0 ? "student-available" : "student-sold-out"}>
+                        <p>{item.description}</p>
+                        <p><strong>{item.price}</strong></p>
+
+                        {/*SA Data Integration:
+                            Display standardised dietary and allergen information so students can make safer food choices. */}
+                        {item.dietaryTags?.length > 0 && (
+                          <div className="tag-section">
+                            <strong>Dietary:</strong>
+                            <div className="tag-row">
+                              {item.dietaryTags.map((tagId) => (
+                                <span key={tagId} className="dietary-tag">
+                                  {getDietaryLabel(tagId)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {item.allergens?.length > 0 && (
+                          <div className="tag-section">
+                            <strong>Allergens:</strong>
+                            <div className="tag-row">
+                              {item.allergens.map((allergenId) => (
+                                <span key={allergenId} className="allergen-tag">
+                                  {getAllergenLabel(allergenId)}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <p className={(item.stock ?? 0) > 0 ? "student-available" : "student-sold-out"}>
                         {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
                       </p>
                       <button
