@@ -17,6 +17,10 @@ import LogoutButton from "../components/LogoutButton";
 import "../App.css";
 import { Link } from "react-router-dom";
 import notificationService from "../services/notificationService";
+import {
+  ALLERGEN_OPTIONS,
+  DIETARY_TAG_OPTIONS,
+} from "../data/dietaryAllergenData";
 // ------------------------------------------------------
 // ORDER STATUS FLOW
 // This defines the valid order status progression.
@@ -58,6 +62,8 @@ export default function VendorDashboard() {
     photoUrl: "",
     stock: 1,
     available: true,
+    allergens: [],
+    dietaryTags: [],
   });
 
   // Stores the ID of the item currently being edited
@@ -262,6 +268,22 @@ const updateOrderStatus = async (orderId, newStatus) => {
     }));
   };
 
+  // Handles checkbox selection for allergen and dietary tag arrays.
+  const handleMultiSelectChange = (fieldName, optionId) => {
+    setFormData((previousFormData) => {
+      const currentValues = previousFormData[fieldName] || [];
+
+      const updatedValues = currentValues.includes(optionId)
+        ? currentValues.filter((value) => value !== optionId)
+        : [...currentValues, optionId];
+
+      return {
+        ...previousFormData,
+        [fieldName]: updatedValues,
+      };
+    });
+  };
+
   // Handles adding a new menu item or updating an existing one
   // Also validates that required fields are filled in correctly
   const handleSubmit = async (event) => {
@@ -305,6 +327,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
         photoUrl: imagePreview || formData.photoUrl,
         stock: formData.stock,
         available: formData.stock > 0,
+        allergens: formData.allergens || [],
+        dietaryTags: formData.dietaryTags || [],
       };
 
       try {
@@ -339,6 +363,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
         photoUrl: imagePreview || formData.photoUrl,
         stock: formData.stock,
         available: formData.stock > 0,
+        allergens: formData.allergens || [],
+        dietaryTags: formData.dietaryTags || [],
       };
 
       addDoc(collection(db, "menuItems"), newMenuItem)
@@ -361,9 +387,12 @@ const updateOrderStatus = async (orderId, newStatus) => {
       photoUrl: "",
       stock: 1,
       available: true,
+      allergens: [],
+      dietaryTags: [],
     });
+
     setImagePreview("");
-  };
+    };
 
   // Toggle stock-based availability
   // If stock is above 0, set it to 0 to mark as sold out
@@ -434,6 +463,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
       photoUrl: item.photoUrl,
       stock: item.stock ?? 1,
       available: item.available,
+      allergens: item.allergens || [],
+      dietaryTags: item.dietaryTags || [],
     });
 
     setImagePreview(item.photoUrl || "");
@@ -455,6 +486,8 @@ const updateOrderStatus = async (orderId, newStatus) => {
       photoUrl: "",
       stock: 1,
       available: true,
+      allergens: [],
+      dietaryTags: [],
     });
 
     setImagePreview("");
@@ -490,6 +523,14 @@ const updateOrderStatus = async (orderId, newStatus) => {
   const completedOrders = vendorOrders.filter(
     (order) => order.status === "completed" && isToday(order.createdAt)
   );
+
+  const getDietaryLabel = (tagId) => {
+    return DIETARY_TAG_OPTIONS.find((option) => option.id === tagId)?.label || tagId;
+  };
+  
+  const getAllergenLabel = (allergenId) => {
+    return ALLERGEN_OPTIONS.find((option) => option.id === allergenId)?.label || allergenId;
+  };
 
   return (
     <div className="app">
@@ -689,6 +730,42 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 value={formData.photoUrl}
                 onChange={handleInputChange}
               />
+
+              <div className="checkbox-group-section">
+                <h4>Dietary Tags</h4>
+                <p className="helper-text">Select all dietary labels that apply to this item.</p>
+
+                <div className="checkbox-options-grid">
+                  {DIETARY_TAG_OPTIONS.map((option) => (
+                    <label key={option.id} className="checkbox-option">
+                      <input
+                        type="checkbox"
+                        checked={(formData.dietaryTags || []).includes(option.id)}
+                        onChange={() => handleMultiSelectChange("dietaryTags", option.id)}
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="checkbox-group-section">
+                <h4>Allergens</h4>
+                <p className="helper-text">Select allergens that the item contains or may contain.</p>
+
+                <div className="checkbox-options-grid">
+                  {ALLERGEN_OPTIONS.map((option) => (
+                    <label key={option.id} className="checkbox-option">
+                      <input
+                        type="checkbox"
+                        checked={(formData.allergens || []).includes(option.id)}
+                        onChange={() => handleMultiSelectChange("allergens", option.id)}
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
   
               {imagePreview && (
                 <div style={{ marginTop: "10px", textAlign: "center" }}>
@@ -756,6 +833,31 @@ const updateOrderStatus = async (orderId, newStatus) => {
                   <h3>{item.name}</h3>
                   <p>{item.description}</p>
                   <p className="price">{item.price}</p>
+                  {item.dietaryTags?.length > 0 && (
+                    <div className="tag-section">
+                      <strong>Dietary:</strong>
+                      <div className="tag-row">
+                        {item.dietaryTags.map((tagId) => (
+                          <span key={tagId} className="dietary-tag">
+                            {getDietaryLabel(tagId)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {item.allergens?.length > 0 && (
+                    <div className="tag-section">
+                      <strong>Allergens:</strong>
+                      <div className="tag-row">
+                        {item.allergens.map((allergenId) => (
+                          <span key={allergenId} className="allergen-tag">
+                            {getAllergenLabel(allergenId)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
   
                   <p>
                     <strong>Stock:</strong> {item.stock ?? 0}
@@ -856,6 +958,42 @@ const updateOrderStatus = async (orderId, newStatus) => {
                 value={formData.photoUrl}
                 onChange={handleInputChange}
               />
+
+              <div className="checkbox-group-section">
+                <h4>Dietary Tags</h4>
+                <p className="helper-text">Select all dietary labels that apply to this item.</p>
+
+                <div className="checkbox-options-grid">
+                  {DIETARY_TAG_OPTIONS.map((option) => (
+                    <label key={option.id} className="checkbox-option">
+                      <input
+                        type="checkbox"
+                        checked={(formData.dietaryTags || []).includes(option.id)}
+                        onChange={() => handleMultiSelectChange("dietaryTags", option.id)}
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="checkbox-group-section">
+                <h4>Allergens</h4>
+                <p className="helper-text">Select allergens that the item contains or may contain.</p>
+
+                <div className="checkbox-options-grid">
+                  {ALLERGEN_OPTIONS.map((option) => (
+                    <label key={option.id} className="checkbox-option">
+                      <input
+                        type="checkbox"
+                        checked={(formData.allergens || []).includes(option.id)}
+                        onChange={() => handleMultiSelectChange("allergens", option.id)}
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
 
               {imagePreview && (
                 <div style={{ marginTop: "10px", textAlign: "center" }}>
