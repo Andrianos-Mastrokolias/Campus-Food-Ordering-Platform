@@ -77,4 +77,8 @@ As a vendor, I want to receive an email when my vendor application is approved, 
 
 As a student, I want access to a support and order policy page so that I can understand the platform’s order rules and know who to contact if I experience issues with a completed order.
 
+# User Story 3: Improved payment and order confirmation flow
+
+As a vendor, I want payment and order statuses to update correctly, so that orders are only marked completed after proper confirmation.
+
 
