@@ -454,8 +454,6 @@ export default function StudentHome() {
           </>
         )}
       </section>
-
-      <LogoutButton />
     </div>
   );
 }
