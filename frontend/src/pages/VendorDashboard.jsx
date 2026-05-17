@@ -170,19 +170,80 @@ export default function VendorDashboard() {
     fetchVendorOrders();
   }, [user, role, loading]);
 
+// Reduces stock for each menu item in an order.
+// This runs when the vendor marks an order as ready/completed.
+// Stock is only reduced once per order using the stockDeducted flag.
+const reduceStockForOrderItems = async (orderItems) => {
+  const stockChangesByItemId = {};
+
+  // Combine quantities for duplicate items in the same order.
+  orderItems.forEach((item) => {
+    if (!item.id) return;
+
+    const quantity = Number(item.quantity || item.qty || 1);
+    stockChangesByItemId[item.id] =
+      (stockChangesByItemId[item.id] || 0) + quantity;
+  });
+
+  for (const menuItemId of Object.keys(stockChangesByItemId)) {
+    const quantityOrdered = stockChangesByItemId[menuItemId];
+    const menuItemRef = doc(db, "menuItems", menuItemId);
+    const menuItemSnap = await getDoc(menuItemRef);
+
+    if (!menuItemSnap.exists()) continue;
+
+    const menuItemData = menuItemSnap.data();
+    const currentStock = Number(menuItemData.stock ?? 0);
+    const updatedStock = Math.max(currentStock - quantityOrdered, 0);
+
+    await updateDoc(menuItemRef, {
+      stock: updatedStock,
+      available: updatedStock > 0,
+    });
+
+    // Update local menu state so the dashboard changes immediately.
+    setMenuItems((previousMenuItems) =>
+      previousMenuItems.map((menuItem) =>
+        menuItem.id === menuItemId
+          ? {
+              ...menuItem,
+              stock: updatedStock,
+              available: updatedStock > 0,
+            }
+          : menuItem
+      )
+    );
+  }
+};
 
 // Updates an order status in Firestore.
-// If the order becomes ready, a real EmailJS notification is sent to the student.
+// If the order becomes ready, stock is reduced and a notification is sent to the student.
 const updateOrderStatus = async (orderId, newStatus) => {
   try {
     const orderRef = doc(db, "orders", orderId);
     const selectedOrder = vendorOrders.find((order) => order.id === orderId);
 
-    await updateDoc(orderRef, {
-      status: newStatus,
-    });
+    const shouldDeductStock =
+      selectedOrder &&
+      !selectedOrder.stockDeducted &&
+      (newStatus === "ready" || newStatus === "completed");
 
-    // US3: trigger real EmailJS notification when the vendor marks an order as ready.
+    if (shouldDeductStock) {
+      await reduceStockForOrderItems(selectedOrder.items || []);
+    }
+
+    const orderUpdate = {
+      status: newStatus,
+    };
+
+    if (shouldDeductStock) {
+      orderUpdate.stockDeducted = true;
+      orderUpdate.stockDeductedAt = serverTimestamp();
+    }
+
+    await updateDoc(orderRef, orderUpdate);
+
+    // Trigger real EmailJS notification when the vendor marks an order as ready.
     // Email failure is handled separately so the order status still updates successfully.
     if (newStatus === "ready" && selectedOrder) {
       try {
@@ -198,12 +259,17 @@ const updateOrderStatus = async (orderId, newStatus) => {
     setVendorOrders((prevOrders) =>
       prevOrders.map((order) =>
         order.id === orderId
-          ? { ...order, status: newStatus }
+          ? {
+              ...order,
+              status: newStatus,
+              ...(shouldDeductStock ? { stockDeducted: true } : {}),
+            }
           : order
       )
     );
   } catch (error) {
-    console.error("Error updating order status:", error.message);
+    console.error("Error updating order status or stock:", error.message);
+    alert("Could not update order status or stock. Please try again.");
   }
 };
 
