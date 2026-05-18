@@ -302,6 +302,8 @@ const reduceStockForOrderItems = async (orderItems) => {
     }));
   };
 
+  // Handles multi-select checkbox changes for dietary tags and allergens.
+  // If an option is already selected, it is removed; otherwise, it is added.
   const handleMultiSelectChange = (fieldName, optionId) => {
     setFormData((previousFormData) => {
       const currentValues = previousFormData[fieldName] || [];
@@ -516,12 +518,16 @@ const reduceStockForOrderItems = async (orderItems) => {
     }
   });
 
+  // Converts a stored dietary tag ID into a readable label.
+  // Example: "halal" becomes "Halal".
   const getDietaryLabel = (tagId) => {
     return (
       DIETARY_TAG_OPTIONS.find((option) => option.id === tagId)?.label || tagId
     );
   };
 
+  // Converts a stored allergen ID into a readable label.
+  // Example: "cow_milk" becomes "Cow's Milk".
   const getAllergenLabel = (allergenId) => {
     return (
       ALLERGEN_OPTIONS.find((option) => option.id === allergenId)?.label ||
