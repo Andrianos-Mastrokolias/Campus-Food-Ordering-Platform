@@ -81,4 +81,8 @@ As a student, I want access to a support and order policy page so that I can und
 
 As a vendor, I want payment and order statuses to update correctly, so that orders are only marked completed after proper confirmation.
 
+# User story 4: System polish and UI improvement 
+
+As a user, I want the application to be stable, responsive, and free of major bugs, so that the platform feels polished, reliable, and easy to use.
+
 
