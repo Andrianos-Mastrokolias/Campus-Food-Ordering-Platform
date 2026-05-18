@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 import paymentService, { PAYMENT_METHOD, PAYMENT_STATUS } from '../../services/paymentService';
 import './PaymentPage.css';
 
@@ -15,6 +16,7 @@ export default function PaymentPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { clearCart } = useCart();
 
   const { paymentId, orderId, amount, items, showMethodSelector: initialShowSelector } = location.state || {};
 
@@ -94,6 +96,9 @@ export default function PaymentPage() {
             items,
             transactionRef: res.transactionRef,
           });
+      
+          // Clear the cart only after the payment succeeds and the order is created.
+          clearCart();
         } catch (orderErr) {
           // Payment went through — log error but don't block success screen
           console.error('Order creation failed after payment:', orderErr);
