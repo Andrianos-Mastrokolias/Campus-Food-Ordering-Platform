@@ -476,3 +476,17 @@ Then the vendor account is still approved and the shop number is still saved.
 Given a vendor approval email is sent  
 When the notification process completes  
 Then a notification log is stored in Firestore.
+
+# UAT user story 4: system polish 
+
+## UAT1: stable navigation
+Given the user is logged into the platform
+When the user navigates between pages and dashboards
+Then the application should load pages correctly without crashes or incorrect redirects.
+
+## UAT2: Reliable feature functionality 
+Given a vendor or student interacts with platform features
+When managing orders, menu items, or analytics
+Then all actions should complete successfully without major system errors or failures.
+
+
