@@ -85,4 +85,8 @@ As a vendor, I want payment and order statuses to update correctly, so that orde
 
 As a user, I want the application to be stable, responsive, and free of major bugs, so that the platform feels polished, reliable, and easy to use.
 
+# User Story 5 :Dietary and Allergen Menu Integration
+
+As a student, I want to view and filter menu items by dietary and allergen information, so that I can make safe and suitable food choices when ordering.
+
 
