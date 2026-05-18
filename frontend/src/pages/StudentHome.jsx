@@ -181,19 +181,19 @@ export default function StudentHome() {
     }
   };
 
-  //US3 Converts stored dietary tag IDs from Firestore into readable labels for students.
+  //US5 Converts stored dietary tag IDs from Firestore into readable labels for students.
   // Example: "halal" becomes "Halal".
   const getDietaryLabel = (tagId) => {
     return DIETARY_TAG_OPTIONS.find((option) => option.id === tagId)?.label || tagId;
   };
 
-  //US3 Converts stored allergen IDs from Firestore into readable labels for students.
+  //US5 Converts stored allergen IDs from Firestore into readable labels for students.
   // Example: "cow_milk" becomes "Cow's Milk".
   const getAllergenLabel = (allergenId) => {
     return ALLERGEN_OPTIONS.find((option) => option.id === allergenId)?.label || allergenId;
   };
 
-  //US3 Adds or removes allergens from the exclusion filter.
+  //US5 Adds or removes allergens from the exclusion filter.
   const handleAllergenFilterChange = (allergenId) => {
     setExcludedAllergens((previousAllergens) =>
       previousAllergens.includes(allergenId)
@@ -202,7 +202,7 @@ export default function StudentHome() {
     );
   };
 
-  //US3 Applies the selected dietary filter and allergen exclusions to each vendor's menu.
+  //US5 Applies the selected dietary filter and allergen exclusions to each vendor's menu.
   // A vendor is only shown if at least one of their items matches the filters.
   const filteredVendorsWithItems = vendorsWithItems
   .map((vendor) => {
