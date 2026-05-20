@@ -38,31 +38,54 @@ export default function Unauthorized() {
   };
 
   return (
-    <div className="unauth-container">
-      <div className="unauth-card">
-        
-        <div className="unauth-icon">🚫</div>
+    <main className="unauth-container">
 
-        {/* Error title */}
-        <h1 className="unauth-title">403 - Access Denied</h1>
+  <section className="unauth-card">
 
-        {/* Explanation message */}
-        <p className="unauth-text">
-          You do not have permission to view this page.
-        </p>
+    <header>
 
-        {/* Button to redirect user to appropriate page */}
-        <div style={{ marginTop: "20px" }}>
-          <button className="unauth-button" onClick={handleGoBack}>
-            Go to my dashboard
-          </button>
-        </div>
+      <p className="unauth-icon" aria-label="Access denied icon">
+        🚫
+      </p>
 
-        {/* Link to login page (useful if session expired) */}
-        <div style={{ marginTop: "15px" }}>
-          <Link to="/login">Go to login</Link>
-        </div>
-      </div>
-    </div>
+      {/* Error title */}
+      <h1 className="unauth-title">
+        403 - Access Denied
+      </h1>
+
+    </header>
+
+    {/* Explanation message */}
+    <p className="unauth-text">
+      You do not have permission to view this page.
+    </p>
+
+    {/* Button to redirect user to appropriate page */}
+    <nav
+      style={{ marginTop: "20px" }}
+      aria-label="Unauthorized page actions"
+    >
+
+      <button
+        className="unauth-button"
+        onClick={handleGoBack}
+      >
+        Go to my dashboard
+      </button>
+
+    </nav>
+
+    {/* Link to login page */}
+    <footer style={{ marginTop: "15px" }}>
+
+      <Link to="/login">
+        Go to login
+      </Link>
+
+    </footer>
+
+  </section>
+
+</main>
   );
 }

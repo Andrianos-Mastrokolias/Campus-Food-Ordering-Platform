@@ -116,7 +116,7 @@ export default function SelectRole() {
    * This avoids flickering between pages during login.
    */
   if (loading) {
-    return <div>Loading...</div>;
+    return <p>Loading...</p>;
   }
 
   /**
@@ -158,44 +158,53 @@ export default function SelectRole() {
    * Main role selection UI
    */
   return (
-    <div className="role-container">
+    <main className="role-container">
 
-      <div className="role-card">
+  <section className="role-card">
 
-        <h1 className="role-title">
-          Choose Your Role
-        </h1>
+    <header>
 
-        <p className="role-subtitle">
-          Select how you want to use the platform
-        </p>
+      <h1 className="role-title">
+        Choose Your Role
+      </h1>
 
-        {/* Role selection buttons */}
-        <div className="role-buttons">
+      <p className="role-subtitle">
+        Select how you want to use the platform
+      </p>
 
-          <button
-            type="button"
-            onClick={() => handleSelectRole("student")}
-          >
-            Student
-          </button>
+    </header>
 
-          <button
-            type="button"
-            onClick={() => handleSelectRole("vendor")}
-          >
-            Vendor
-          </button>
+    {/* Role selection buttons */}
+    <nav
+      className="role-buttons"
+      aria-label="Role selection options"
+    >
 
-          <button
-            type="button"
-            onClick={() => handleSelectRole("admin")}
-          >
-            Admin
-          </button>
+      <button
+        type="button"
+        onClick={() => handleSelectRole("student")}
+      >
+        Student
+      </button>
 
-        </div>
-      </div>
-    </div>
+      <button
+        type="button"
+        onClick={() => handleSelectRole("vendor")}
+      >
+        Vendor
+      </button>
+
+      <button
+        type="button"
+        onClick={() => handleSelectRole("admin")}
+      >
+        Admin
+      </button>
+
+    </nav>
+
+  </section>
+
+</main>
   );
 }
