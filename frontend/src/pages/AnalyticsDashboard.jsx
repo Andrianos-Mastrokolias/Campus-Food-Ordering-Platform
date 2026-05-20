@@ -225,201 +225,463 @@ export default function AnalyticsDashboard() {
   }
 
   return (
-    <div className="analytics-page">
-      <header className="analytics-header">
-        <h1>Vendor Analytics Dashboard</h1>
-        <p>View sales trends, peak ordering hours, and custom reports.</p>
-      </header>
+    /* -------------------------------------------------- */
+/* MAIN ANALYTICS PAGE                                */
+/* Wrapper for the entire vendor analytics dashboard  */
+/* -------------------------------------------------- */
+<main className="analytics-page">
 
-      <section className="analytics-summary">
-        <div className="summary-card">
-          <h3>Total Sales</h3>
-          <p>R{totalSales.toFixed(2)}</p>
-        </div>
+  {/* -------------------------------------------------- */}
+  {/* PAGE HEADER                                        */}
+  {/* Displays dashboard title and description           */}
+  {/* -------------------------------------------------- */}
+  <header className="analytics-header">
 
-        <div className="summary-card">
-          <h3>Total Orders</h3>
-          <p>{totalOrders}</p>
-        </div>
+    <h1>Vendor Analytics Dashboard</h1>
 
-        <div className="summary-card">
-          <h3>Average Order</h3>
-          <p>R{averageOrderValue.toFixed(2)}</p>
-        </div>
+    <p>
+      View sales trends, peak ordering hours,
+      and custom reports.
+    </p>
 
-        <div className="summary-card">
-          <h3>Peak Hour</h3>
-          <p>{busiestHour}</p>
-        </div>
-      </section>
+  </header>
 
-      <section className="analytics-filters">
-        <h2>Custom View Filters</h2>
+  {/* -------------------------------------------------- */}
+  {/* ANALYTICS SUMMARY CARDS                            */}
+  {/* Displays high-level analytics statistics           */}
+  {/* -------------------------------------------------- */}
+  <section
+    className="analytics-summary"
+    aria-label="Analytics summary"
+  >
 
-        <div className="filter-row">
-          <label>
-            Start Date
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+    {/* Total sales summary */}
+    <article className="summary-card">
+
+      <h3>Total Sales</h3>
+
+      <p>
+        R{totalSales.toFixed(2)}
+      </p>
+
+    </article>
+
+    {/* Total orders summary */}
+    <article className="summary-card">
+
+      <h3>Total Orders</h3>
+
+      <p>{totalOrders}</p>
+
+    </article>
+
+    {/* Average order value summary */}
+    <article className="summary-card">
+
+      <h3>Average Order</h3>
+
+      <p>
+        R{averageOrderValue.toFixed(2)}
+      </p>
+
+    </article>
+
+    {/* Busiest ordering hour summary */}
+    <article className="summary-card">
+
+      <h3>Peak Hour</h3>
+
+      <p>{busiestHour}</p>
+
+    </article>
+
+  </section>
+
+  {/* -------------------------------------------------- */}
+  {/* CUSTOM FILTER SECTION                              */}
+  {/* Allows vendors to filter analytics reports         */}
+  {/* by date range and order status                     */}
+  {/* -------------------------------------------------- */}
+  <section className="analytics-filters">
+
+    <header>
+
+      <h2>Custom View Filters</h2>
+
+    </header>
+
+    {/* Filter form */}
+    <form className="filter-row">
+
+      {/* Start date filter */}
+      <label>
+
+        Start Date
+
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) =>
+            setStartDate(e.target.value)
+          }
+        />
+
+      </label>
+
+      {/* End date filter */}
+      <label>
+
+        End Date
+
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) =>
+            setEndDate(e.target.value)
+          }
+        />
+
+      </label>
+
+      {/* Order status filter */}
+      <label>
+
+        Status
+
+        <select
+          value={statusFilter}
+          onChange={(e) =>
+            setStatusFilter(e.target.value)
+          }
+        >
+
+          <option value="all">
+            All
+          </option>
+
+          <option value="paid">
+            Paid
+          </option>
+
+          <option value="preparing">
+            Preparing
+          </option>
+
+          <option value="ready">
+            Ready
+          </option>
+
+          <option value="completed">
+            Completed
+          </option>
+
+        </select>
+
+      </label>
+
+    </form>
+
+  </section>
+
+  {/* -------------------------------------------------- */}
+  {/* SALES OVER TIME REPORT                             */}
+  {/* Displays vendor sales trends using a line chart    */}
+  {/* -------------------------------------------------- */}
+  <section className="analytics-card">
+
+    <header className="report-header">
+
+      <h2>Sales Over Time</h2>
+
+      {/* Export controls */}
+      <nav aria-label="Sales report export options">
+
+        <button
+          onClick={() =>
+            exportToCSV(
+              "sales-over-time",
+              salesOverTime
+            )
+          }
+        >
+          Export CSV
+        </button>
+
+        <button
+          onClick={() =>
+            exportToPDF(
+              "Sales Over Time",
+              salesOverTime
+            )
+          }
+        >
+          Export PDF
+        </button>
+
+      </nav>
+
+    </header>
+
+    {/* Display message if no sales data exists */}
+    {salesOverTime.length === 0 ? (
+
+      <p>No sales data available.</p>
+
+    ) : (
+
+      /* Responsive chart container */
+      <figure>
+
+        <ResponsiveContainer
+          width="100%"
+          height={300}
+        >
+
+          {/* Line chart for sales trends */}
+          <LineChart data={salesOverTime}>
+
+            {/* Grid lines */}
+            <CartesianGrid
+              strokeDasharray="3 3"
             />
-          </label>
 
-          <label>
-            End Date
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+            {/* X-axis: dates */}
+            <XAxis dataKey="date" />
+
+            {/* Y-axis: sales values */}
+            <YAxis />
+
+            {/* Hover tooltip */}
+            <Tooltip />
+
+            {/* Sales data line */}
+            <Line
+              type="monotone"
+              dataKey="sales"
             />
-          </label>
 
-          <label>
-            Status
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="pending">Pending</option>
-              <option value="preparing">Preparing</option>
-              <option value="ready">Ready</option>
-              <option value="completed">Completed</option>
-            </select>
-          </label>
-        </div>
+          </LineChart>
+
+        </ResponsiveContainer>
+
+      </figure>
+    )}
+
+  </section>
+
+  {/* -------------------------------------------------- */}
+  {/* PEAK ORDERING HOURS REPORT                         */}
+  {/* Displays busiest ordering times using bar chart    */}
+  {/* -------------------------------------------------- */}
+  <section className="analytics-card">
+
+    <header className="report-header">
+
+      <h2>Peak Ordering Hours</h2>
+
+      {/* Export controls */}
+      <nav
+        aria-label="Peak ordering report export options"
+      >
+
+        <button
+          onClick={() =>
+            exportToCSV(
+              "peak-ordering-hours",
+              peakOrderingHours
+            )
+          }
+        >
+          Export CSV
+        </button>
+
+        <button
+          onClick={() =>
+            exportToPDF(
+              "Peak Ordering Hours",
+              peakOrderingHours
+            )
+          }
+        >
+          Export PDF
+        </button>
+
+      </nav>
+
+    </header>
+
+    {/* Display message if no order data exists */}
+    {peakOrderingHours.length === 0 ? (
+
+      <p>No ordering hour data available.</p>
+
+    ) : (
+
+      /* Responsive chart container */
+      <figure>
+
+        <ResponsiveContainer
+          width="100%"
+          height={300}
+        >
+
+          {/* Bar chart for ordering hours */}
+          <BarChart
+            data={peakOrderingHours}
+          >
+
+            <CartesianGrid
+              strokeDasharray="3 3"
+            />
+
+            {/* X-axis: hours */}
+            <XAxis dataKey="hour" />
+
+            {/* Y-axis: order count */}
+            <YAxis />
+
+            {/* Hover tooltip */}
+            <Tooltip />
+
+            {/* Order frequency bars */}
+            <Bar
+              dataKey="orders"
+              barSize={60}
+            />
+
+          </BarChart>
+
+        </ResponsiveContainer>
+
+      </figure>
+    )}
+
+  </section>
+
+  {/* -------------------------------------------------- */}
+  {/* CUSTOM REPORT TABLE                                */}
+  {/* Displays filtered order report in table format     */}
+  {/* -------------------------------------------------- */}
+  <section className="analytics-card">
+
+    <header className="report-header">
+
+      <h2>Custom Report</h2>
+
+      {/* Export controls */}
+      <nav
+        aria-label="Custom report export options"
+      >
+
+        <button
+          onClick={() =>
+            exportToCSV(
+              "custom-order-report",
+              customReportRows
+            )
+          }
+        >
+          Export CSV
+        </button>
+
+        <button
+          onClick={() =>
+            exportToPDF(
+              "Custom Order Report",
+              customReportRows
+            )
+          }
+        >
+          Export PDF
+        </button>
+
+      </nav>
+
+    </header>
+
+    {/* Display message if filters return no data */}
+    {customReportRows.length === 0 ? (
+
+      <p>No orders match your filters.</p>
+
+    ) : (
+
+      /* Responsive report table container */
+      <section
+        className="table-wrapper"
+        aria-label="Custom analytics report table"
+      >
+
+        {/* Analytics data table */}
+        <table className="analytics-table">
+
+          {/* Table headings */}
+          <thead>
+
+            <tr>
+
+              <th>Order ID</th>
+
+              <th>Vendor ID</th>
+
+              <th>Student ID</th>
+
+              <th>Status</th>
+
+              <th>Total</th>
+
+              <th>Date</th>
+
+              <th>Items</th>
+
+            </tr>
+
+          </thead>
+
+          {/* Table body */}
+          <tbody>
+
+            {/* Generate rows dynamically */}
+            {customReportRows.map((row) => (
+
+              <tr key={row.orderId}>
+
+                {/* Shortened order ID */}
+                <td>
+                  {row.orderId.slice(0, 6)}
+                </td>
+
+                {/* Vendor ID */}
+                <td>{row.vendorId}</td>
+
+                {/* Student ID */}
+                <td>{row.studentId}</td>
+
+                {/* Order status */}
+                <td>{row.status}</td>
+
+                {/* Total order price */}
+                <td>R{row.total}</td>
+
+                {/* Order creation date */}
+                <td>{row.date}</td>
+
+                {/* Number of items in order */}
+                <td>{row.itemCount}</td>
+
+              </tr>
+
+            ))}
+
+          </tbody>
+
+        </table>
+
       </section>
+    )}
 
-      <section className="analytics-card">
-        <div className="report-header">
-          <h2>Sales Over Time</h2>
+  </section>
 
-          <div>
-            <button
-              onClick={() => exportToCSV("sales-over-time", salesOverTime)}
-            >
-              Export CSV
-            </button>
-
-            <button
-              onClick={() => exportToPDF("Sales Over Time", salesOverTime)}
-            >
-              Export PDF
-            </button>
-          </div>
-        </div>
-
-        {salesOverTime.length === 0 ? (
-          <p>No sales data available.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={salesOverTime}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="sales" />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </section>
-
-      <section className="analytics-card">
-        <div className="report-header">
-          <h2>Peak Ordering Hours</h2>
-
-          <div>
-            <button
-              onClick={() =>
-                exportToCSV("peak-ordering-hours", peakOrderingHours)
-              }
-            >
-              Export CSV
-            </button>
-
-            <button
-              onClick={() =>
-                exportToPDF("Peak Ordering Hours", peakOrderingHours)
-              }
-            >
-              Export PDF
-            </button>
-          </div>
-        </div>
-
-        {peakOrderingHours.length === 0 ? (
-          <p>No ordering hour data available.</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={peakOrderingHours}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="orders" barSize={60} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </section>
-
-      <section className="analytics-card">
-        <div className="report-header">
-          <h2>Custom Report</h2>
-
-          <div>
-            <button
-              onClick={() =>
-                exportToCSV("custom-order-report", customReportRows)
-              }
-            >
-              Export CSV
-            </button>
-
-            <button
-              onClick={() =>
-                exportToPDF("Custom Order Report", customReportRows)
-              }
-            >
-              Export PDF
-            </button>
-          </div>
-        </div>
-
-        {customReportRows.length === 0 ? (
-          <p>No orders match your filters.</p>
-        ) : (
-          <div className="table-wrapper">
-            <table className="analytics-table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Vendor ID</th>
-                  <th>Student ID</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                  <th>Date</th>
-                  <th>Items</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {customReportRows.map((row) => (
-                  <tr key={row.orderId}>
-                    <td>{row.orderId.slice(0, 6)}</td>
-                    <td>{row.vendorId}</td>
-                    <td>{row.studentId}</td>
-                    <td>{row.status}</td>
-                    <td>R{row.total}</td>
-                    <td>{row.date}</td>
-                    <td>{row.itemCount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </div>
+</main>
   );
 }
