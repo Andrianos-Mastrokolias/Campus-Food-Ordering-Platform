@@ -120,96 +120,125 @@ export default function VendorDetailChangeRequest() {
   };
 
   if (loading) {
-    return <div className="vendor-change-page"><p>Loading...</p></div>;
-  }
-
   return (
-    <div className="vendor-change-page">
-      <div className="vendor-change-card">
+    <main className="vendor-change-page">
+      <section>
+        <p>Loading...</p>
+      </section>
+    </main>
+  );
+}
+
+return (
+  <main className="vendor-change-page">
+    <section className="vendor-change-card">
+      <header>
         <h1>Request Shop Detail Changes</h1>
         <p>
           Submit updated shop details for admin approval. Changes only apply after an admin approves the request.
         </p>
+      </header>
 
-        {error && <div className="change-alert change-alert-error">{error}</div>}
-        {success && <div className="change-alert change-alert-success">{success}</div>}
+      {error && (
+        <section className="change-alert change-alert-error" role="alert">
+          <p>{error}</p>
+        </section>
+      )}
 
-        <form className="change-form" onSubmit={handleSubmit}>
-          <label>
-            Business Name
-            <input
-              type="text"
-              name="businessName"
-              value={formData.businessName}
-              onChange={handleInputChange}
-            />
-          </label>
+      {success && (
+        <section className="change-alert change-alert-success" role="status">
+          <p>{success}</p>
+        </section>
+      )}
 
-          <label>
-            Business Description
-            <textarea
-              name="businessDescription"
-              value={formData.businessDescription}
-              onChange={handleInputChange}
-            />
-          </label>
+      <form className="change-form" onSubmit={handleSubmit}>
+        <label>
+          Business Name
+          <input
+            type="text"
+            name="businessName"
+            value={formData.businessName}
+            onChange={handleInputChange}
+          />
+        </label>
 
-          <label>
-            Business Phone
-            <input
-              type="text"
-              name="businessPhone"
-              value={formData.businessPhone}
-              onChange={handleInputChange}
-            />
-          </label>
+        <label>
+          Business Description
+          <textarea
+            name="businessDescription"
+            value={formData.businessDescription}
+            onChange={handleInputChange}
+          />
+        </label>
 
-          <label>
-            Business Address
-            <input
-              type="text"
-              name="businessAddress"
-              value={formData.businessAddress}
-              onChange={handleInputChange}
-            />
-          </label>
+        <label>
+          Business Phone
+          <input
+            type="text"
+            name="businessPhone"
+            value={formData.businessPhone}
+            onChange={handleInputChange}
+          />
+        </label>
 
-          <label>
-            Business Type
-            <input
-              type="text"
-              name="businessType"
-              value={formData.businessType}
-              onChange={handleInputChange}
-            />
-          </label>
+        <label>
+          Business Address
+          <input
+            type="text"
+            name="businessAddress"
+            value={formData.businessAddress}
+            onChange={handleInputChange}
+          />
+        </label>
 
-          <button type="submit" disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit Change Request'}
-          </button>
-        </form>
-      </div>
+        <label>
+          Business Type
+          <input
+            type="text"
+            name="businessType"
+            value={formData.businessType}
+            onChange={handleInputChange}
+          />
+        </label>
 
-      <div className="vendor-change-card">
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Submitting...' : 'Submit Change Request'}
+        </button>
+      </form>
+    </section>
+
+    <section className="vendor-change-card">
+      <header>
         <h2>My Previous Requests</h2>
+      </header>
 
-        {requests.length === 0 ? (
-          <p>No detail change requests submitted yet.</p>
-        ) : (
-          <div className="request-list">
-            {requests.map((request) => (
-              <div key={request.id} className={`request-row ${request.status}`}>
-                <div>
-                  <strong>{request.requestedProfile?.businessName || 'Unnamed request'}</strong>
-                  <p>{request.requestedProfile?.businessAddress}</p>
-                  <small>Submitted: {formatDate(request.createdAt)}</small>
-                </div>
-                <span className="request-status">{request.status}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+      {requests.length === 0 ? (
+        <p>No detail change requests submitted yet.</p>
+      ) : (
+        <ul className="request-list">
+          {requests.map((request) => (
+            <li
+              key={request.id}
+              className={`request-row ${request.status}`}
+            >
+              <article>
+                <strong>
+                  {request.requestedProfile?.businessName || 'Unnamed request'}
+                </strong>
+                <p>{request.requestedProfile?.businessAddress}</p>
+                <small>
+                  Submitted: <time>{formatDate(request.createdAt)}</time>
+                </small>
+              </article>
+
+              <mark className="request-status">
+                {request.status}
+              </mark>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  </main>
+);
 }

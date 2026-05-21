@@ -161,177 +161,184 @@ const VendorRegistrationForm = () => {
   };
 
   const getStatusBadge = (status) => {
-    const badges = {
-      pending: <span className="badge badge-warning">Pending Review</span>,
-      approved: <span className="badge badge-success">Approved</span>,
-      rejected: <span className="badge badge-danger">Rejected</span>
-    };
-    return badges[status] || <span className="badge badge-secondary">Unknown</span>;
+  const badges = {
+    pending: <mark className="badge badge-warning">Pending Review</mark>,
+    approved: <mark className="badge badge-success">Approved</mark>,
+    rejected: <mark className="badge badge-danger">Rejected</mark>
   };
 
-  if (!user) {
-    return (
-      <div className="vendor-registration-form">
-        <div className="alert alert-info">
-          Please log in to register as a vendor.
-        </div>
-      </div>
-    );
-  }
+  return badges[status] || <mark className="badge badge-secondary">Unknown</mark>;
+};
 
-  if (role === 'vendor') {
-    return (
-      <div className="vendor-registration-form">
-        <div className="alert alert-success">
-          <h3>You are already a registered vendor!</h3>
-          <p>You can manage your business from the vendor dashboard.</p>
-        </div>
-      </div>
-    );
-  }
-
+if (!user) {
   return (
-    <div className="vendor-registration-form">
-      <div className="form-header">
-        <h2>Vendor Registration</h2>
-        <p>Register your business to start selling on the Campus Food Ordering Platform.</p>
-      </div>
+    <main className="vendor-registration-form">
+      <section className="alert alert-info">
+        Please log in to register as a vendor.
+      </section>
+    </main>
+  );
+}
 
-      {error && (
-        <div className="alert alert-danger">
-          <strong>Error:</strong> {error}
-        </div>
-      )}
+if (role === 'vendor') {
+  return (
+    <main className="vendor-registration-form">
+      <section className="alert alert-success">
+        <h3>You are already a registered vendor!</h3>
+        <p>You can manage your business from the vendor dashboard.</p>
+      </section>
+    </main>
+  );
+}
 
-      {success && (
-        <div className="alert alert-success">
-          <strong>Success:</strong> {success}
-        </div>
-      )}
+return (
+  <main className="vendor-registration-form">
+    <header className="form-header">
+      <h2>Vendor Registration</h2>
+      <p>Register your business to start selling on the Campus Food Ordering Platform.</p>
+    </header>
 
-      {hasPendingApp && (
-        <div className="alert alert-warning">
-          <strong>Note:</strong> You already have a pending vendor application. Please wait for it to be reviewed.
-        </div>
-      )}
+    {error && (
+      <section className="alert alert-danger" role="alert">
+        <strong>Error:</strong> {error}
+      </section>
+    )}
 
-      <form onSubmit={handleSubmit} className="registration-form">
-        <div className="form-group">
-          <label htmlFor="businessName">Business Name *</label>
-          <input
-            type="text"
-            id="businessName"
-            name="businessName"
-            className="form-control"
-            value={formData.businessName}
-            onChange={handleChange}
-            placeholder="E.g., Matrix Cafe"
-            disabled={hasPendingApp || loading}
-            required
-          />
-          <small className="form-text">The name of your business as it will appear to students</small>
-        </div>
+    {success && (
+      <section className="alert alert-success" role="status">
+        <strong>Success:</strong> {success}
+      </section>
+    )}
 
-        <div className="form-group">
-          <label htmlFor="description">Business Description *</label>
-          <textarea
-            id="description"
-            name="description"
-            className="form-control"
-            rows="5"
-            value={formData.description}
-            onChange={handleChange}
-            placeholder="Describe your business, what you sell, and what makes you unique... (minimum 20 characters)"
-            disabled={hasPendingApp || loading}
-            required
-          />
-          <small className="form-text">
-            {formData.description.length}/500 characters (minimum 20)
-          </small>
-        </div>
+    {hasPendingApp && (
+      <section className="alert alert-warning" role="alert">
+        <strong>Note:</strong> You already have a pending vendor application. Please wait for it to be reviewed.
+      </section>
+    )}
 
-        <div className="form-group">
-          <label htmlFor="phone">Phone Number *</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            className="form-control"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="+27123456789 or 0123456789"
-            disabled={hasPendingApp || loading}
-            required
-          />
-          <small className="form-text">South African format: +27XXXXXXXXX or 0XXXXXXXXX</small>
-        </div>
+    <form onSubmit={handleSubmit} className="registration-form">
+      <fieldset className="form-group">
+        <label htmlFor="businessName">Business Name *</label>
+        <input
+          type="text"
+          id="businessName"
+          name="businessName"
+          className="form-control"
+          value={formData.businessName}
+          onChange={handleChange}
+          placeholder="E.g., Matrix Cafe"
+          disabled={hasPendingApp || loading}
+          required
+        />
+        <small className="form-text">The name of your business as it will appear to students</small>
+      </fieldset>
 
-        <div className="form-group">
-          <label htmlFor="location">Business Location *</label>
-          <textarea
-            id="location"
-            name="location"
-            className="form-control"
-            rows="3"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="E.g., Campus Building A, Ground Floor, Near Library"
-            disabled={hasPendingApp || loading}
-            required
-          />
-          <small className="form-text">Provide detailed location on campus for easy pickup</small>
-        </div>
+      <fieldset className="form-group">
+        <label htmlFor="description">Business Description *</label>
+        <textarea
+          id="description"
+          name="description"
+          className="form-control"
+          rows="5"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="Describe your business, what you sell, and what makes you unique... (minimum 20 characters)"
+          disabled={hasPendingApp || loading}
+          required
+        />
+        <small className="form-text">
+          {formData.description.length}/500 characters (minimum 20)
+        </small>
+      </fieldset>
 
-        <div className="form-actions">
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={hasPendingApp || loading}
-          >
-            {loading ? 'Submitting...' : 'Submit Registration'}
-          </button>
-        </div>
-      </form>
+      <fieldset className="form-group">
+        <label htmlFor="phone">Phone Number *</label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          className="form-control"
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder="+27123456789 or 0123456789"
+          disabled={hasPendingApp || loading}
+          required
+        />
+        <small className="form-text">South African format: +27XXXXXXXXX or 0XXXXXXXXX</small>
+      </fieldset>
 
-      {userApplications.length > 0 && (
-        <div className="application-history">
-          <h3>Your Application History</h3>
-          <div className="applications-list">
-            {userApplications.map((app) => (
-              <div key={app.id} className="application-card">
-                <div className="application-header">
-                  <div className="application-status">
+      <fieldset className="form-group">
+        <label htmlFor="location">Business Location *</label>
+        <textarea
+          id="location"
+          name="location"
+          className="form-control"
+          rows="3"
+          value={formData.location}
+          onChange={handleChange}
+          placeholder="E.g., Campus Building A, Ground Floor, Near Library"
+          disabled={hasPendingApp || loading}
+          required
+        />
+        <small className="form-text">Provide detailed location on campus for easy pickup</small>
+      </fieldset>
+
+      <footer className="form-actions">
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={hasPendingApp || loading}
+        >
+          {loading ? 'Submitting...' : 'Submit Registration'}
+        </button>
+      </footer>
+    </form>
+
+    {userApplications.length > 0 && (
+      <section className="application-history">
+        <h3>Your Application History</h3>
+
+        <ul className="applications-list">
+          {userApplications.map((app) => (
+            <li key={app.id} className="application-card">
+              <article>
+                <header className="application-header">
+                  <p className="application-status">
                     {getStatusBadge(app.status)}
-                  </div>
-                  <div className="application-date">
+                  </p>
+                  <time className="application-date">
                     Submitted: {formatDate(app.createdAt)}
-                  </div>
-                </div>
-                <div className="application-body">
+                  </time>
+                </header>
+
+                <section className="application-body">
                   <p><strong>Business Name:</strong> {app.businessName}</p>
                   <p><strong>Description:</strong></p>
                   <p className="description-text">{app.businessDescription}</p>
                   <p><strong>Phone:</strong> {app.businessPhone}</p>
                   <p><strong>Location:</strong> {app.businessAddress}</p>
+
                   {app.reviewNotes && (
                     <>
                       <p><strong>Review Notes:</strong></p>
                       <p className="review-notes">{app.reviewNotes}</p>
                     </>
                   )}
+
                   {app.reviewedAt && (
-                    <p className="reviewed-date">
+                    <time className="reviewed-date">
                       Reviewed: {formatDate(app.reviewedAt)}
-                    </p>
+                    </time>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+                </section>
+              </article>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </main>
+);
 };
 
 export default VendorRegistrationForm;

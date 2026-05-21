@@ -19,71 +19,75 @@ import "./SupportPage.css";
 
 export default function SupportPage() {
   return (
-    <div className="support-page">
+    <main className="support-page">
 
-      {/* Main heading */}
-      <h1>Customer Support & Order Policy</h1>
+  {/* Main heading */}
+  <header>
+    <h1>Customer Support & Order Policy</h1>
+  </header>
 
-      {/* Introductory message */}
-      <p className="support-intro">
-        Please read the following information carefully before placing an order.
-      </p>
+  {/* Introductory message */}
+  <p className="support-intro">
+    Please read the following information carefully before placing an order.
+  </p>
 
-      {/* -------------------------------------------------- */}
-      {/* ORDER POLICY SECTION */}
-      {/* -------------------------------------------------- */}
-      <div className="support-card">
+  {/* -------------------------------------------------- */}
+  {/* ORDER POLICY SECTION */}
+  {/* -------------------------------------------------- */}
+  <section className="support-card">
 
-        <h2>Order Cancellation Policy</h2>
+    <h2>Order Cancellation Policy</h2>
 
-        <p>
-          Once an order has been placed and confirmed, it cannot be cancelled.
-        </p>
+    <p>
+      Once an order has been placed and confirmed, it cannot be cancelled.
+    </p>
 
-        <p>
-          Vendors begin preparing orders immediately after confirmation,
-          therefore cancellations are not supported on the platform.
-        </p>
+    <p>
+      Vendors begin preparing orders immediately after confirmation,
+      therefore cancellations are not supported on the platform.
+    </p>
 
-      </div>
+  </section>
 
-      {/* -------------------------------------------------- */}
-      {/* CUSTOMER SUPPORT SECTION */}
-      {/* -------------------------------------------------- */}
-      <div className="support-card">
+  {/* -------------------------------------------------- */}
+  {/* CUSTOMER SUPPORT SECTION */}
+  {/* -------------------------------------------------- */}
+  <section className="support-card">
 
-        <h2>Need Help With Your Order?</h2>
+    <h2>Need Help With Your Order?</h2>
 
-        <p>
-          If you experience issues with a completed order,
-          please contact our support team using the email below:
-        </p>
+    <p>
+      If you experience issues with a completed order,
+      please contact our support team using the email below:
+    </p>
 
-        {/* Support email */}
-        <p className="support-email">
-          support.campusfoodapp@gmail.com
-        </p>
+    {/* Support email */}
+    <address className="support-email">
+      support.campusfoodapp@gmail.com
+    </address>
 
-        {/* Helpful instruction for users */}
-        <p>
-          Please include your <strong>Order ID</strong> in the subject line
-          of your email so that we can assist you faster.
-        </p>
+    {/* Helpful instruction for users */}
+    <p>
+      Please include your <strong>Order ID</strong> in the subject line
+      of your email so that we can assist you faster.
+    </p>
 
-        {/* Example shown to the user */}
-        <div className="example-box">
-          Example Subject: Order #A12345
-        </div>
+    {/* Example shown to the user */}
+    <aside className="example-box">
+      Example Subject: Order #A12345
+    </aside>
 
-      </div>
+  </section>
 
-      {/* -------------------------------------------------- */}
-      {/* NAVIGATION BACK TO HOME */}
-      {/* -------------------------------------------------- */}
-      <Link to="/home" className="back-btn">
-        ← Return to Dashboard
-      </Link>
+  {/* -------------------------------------------------- */}
+  {/* NAVIGATION BACK TO HOME */}
+  {/* -------------------------------------------------- */}
+  <nav>
+    <Link to="/home" className="back-btn">
+      ← Return to Dashboard
+    </Link>
+  </nav>
 
-    </div>
+</main>
   );
 }

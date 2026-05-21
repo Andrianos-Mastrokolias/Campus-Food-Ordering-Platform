@@ -76,66 +76,102 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="page checkout-page">
-      <div className="checkout-container">
+    <main className="page checkout-page">
 
-        <div className="checkout-header">
-          <h2>🛒 Checkout</h2>
-          <p className="checkout-subtitle">Review your order and choose how to pay</p>
-        </div>
+  <section className="checkout-container">
 
-        <div className="checkout-body">
+    <header className="checkout-header">
+      <h2>🛒 Checkout</h2>
+      <p className="checkout-subtitle">
+        Review your order and choose how to pay
+      </p>
+    </header>
 
-          <section className="checkout-section order-summary">
-            <h3>Order Summary</h3>
-            <div className="order-items">
-              {DEMO_CART.map(item => (
-                <div key={item.id} className="order-item">
-                  <span className="item-name">{item.name}</span>
-                  <span className="item-qty">×{item.qty}</span>
-                  <span className="item-price">R {(item.price * item.qty).toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-            <div className="order-totals">
-              <div className="total-row"><span>Subtotal</span><span>R {subtotal.toFixed(2)}</span></div>
-              <div className="total-row"><span>Service fee</span><span>R {serviceFee.toFixed(2)}</span></div>
-              <div className="total-row total-final"><span>Total</span><span>R {total.toFixed(2)}</span></div>
-            </div>
-          </section>
+    <section className="checkout-body">
 
-          <section className="checkout-section payment-method-section">
-            <h3>Payment Method</h3>
-            <div className="method-grid">
-              {PAYMENT_METHODS.map(m => (
-                <button
-                  key={m.id}
-                  className={`method-card ${selectedMethod === m.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedMethod(m.id)}
-                >
-                  <span className="method-icon">{m.icon}</span>
-                  <span className="method-label">{m.label}</span>
-                  <span className="method-desc">{m.description}</span>
-                  {selectedMethod === m.id && <span className="method-check">✓</span>}
-                </button>
-              ))}
-            </div>
-          </section>
+      <section className="checkout-section order-summary">
+        <h3>Order Summary</h3>
 
-        </div>
+        <section className="order-items">
+          {DEMO_CART.map((item) => (
+            <article key={item.id} className="order-item">
+              <strong className="item-name">{item.name}</strong>
+              <strong className="item-qty">×{item.qty}</strong>
+              <strong className="item-price">
+                R {(item.price * item.qty).toFixed(2)}
+              </strong>
+            </article>
+          ))}
+        </section>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        <section className="order-totals">
+          <p className="total-row">
+            <strong>Subtotal</strong>
+            <strong>R {subtotal.toFixed(2)}</strong>
+          </p>
 
-        <div className="checkout-actions">
-          <button className="btn btn-secondary" onClick={() => navigate('/home')} disabled={loading}>
-            ← Back
-          </button>
-          <button className="btn btn-primary btn-pay" onClick={handleProceed} disabled={loading}>
-            {loading ? 'Preparing payment…' : `Pay R ${total.toFixed(2)}`}
-          </button>
-        </div>
+          <p className="total-row">
+            <strong>Service fee</strong>
+            <strong>R {serviceFee.toFixed(2)}</strong>
+          </p>
 
-      </div>
-    </div>
+          <p className="total-row total-final">
+            <strong>Total</strong>
+            <strong>R {total.toFixed(2)}</strong>
+          </p>
+        </section>
+      </section>
+
+      <section className="checkout-section payment-method-section">
+        <h3>Payment Method</h3>
+
+        <section className="method-grid">
+          {PAYMENT_METHODS.map((m) => (
+            <button
+              key={m.id}
+              className={`method-card ${selectedMethod === m.id ? "selected" : ""}`}
+              onClick={() => setSelectedMethod(m.id)}
+            >
+              <strong className="method-icon">{m.icon}</strong>
+              <strong className="method-label">{m.label}</strong>
+              <small className="method-desc">{m.description}</small>
+
+              {selectedMethod === m.id && (
+                <strong className="method-check">✓</strong>
+              )}
+            </button>
+          ))}
+        </section>
+      </section>
+
+    </section>
+
+    {error && (
+      <aside className="alert alert-danger">
+        {error}
+      </aside>
+    )}
+
+    <footer className="checkout-actions">
+      <button
+        className="btn btn-secondary"
+        onClick={() => navigate("/home")}
+        disabled={loading}
+      >
+        ← Back
+      </button>
+
+      <button
+        className="btn btn-primary btn-pay"
+        onClick={handleProceed}
+        disabled={loading}
+      >
+        {loading ? "Preparing payment…" : `Pay R ${total.toFixed(2)}`}
+      </button>
+    </footer>
+
+  </section>
+
+</main>
   );
 }

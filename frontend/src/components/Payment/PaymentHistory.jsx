@@ -44,63 +44,118 @@ export default function PaymentHistory() {
   }
 
   return (
-    <div className="page history-page">
-      <div className="history-container">
-        <div className="history-header">
-          <h2>💳 Payment History</h2>
-          <button className="btn btn-primary" onClick={() => navigate('/checkout')}>+ New Order</button>
-        </div>
+    <main className="page history-page">
 
-        {loading && <div className="history-loading"><div className="spinner" /><p>Loading…</p></div>}
-        {error   && <div className="alert alert-danger">{error}</div>}
+  <section className="history-container">
 
-        {!loading && !error && payments.length === 0 && (
-          <div className="history-empty">
-            <div className="empty-icon">🧾</div>
-            <h3>No payments yet</h3>
-            <p>Your payment history will appear here after you place an order.</p>
-            <button className="btn btn-primary" onClick={() => navigate('/checkout')}>Place your first order</button>
-          </div>
-        )}
+    <header className="history-header">
+      <h2>💳 Payment History</h2>
 
-        {!loading && payments.length > 0 && (
-          <div className="history-list">
-            {payments.map(p => {
-              const meta = STATUS_META[p.status] || { label: p.status, cls: 'pending' };
-              return (
-                <div key={p.id} className="history-card">
-                  <div className="hcard-top">
-                    <div className="hcard-method">
-                      <span className="hcard-method-icon">{METHOD_ICON[p.method] || '💰'}</span>
-                      <div>
-                        <div className="hcard-order-id">{p.orderId}</div>
-                        <div className="hcard-date">{formatDate(p.createdAt)}</div>
-                      </div>
-                    </div>
-                    <div className="hcard-right">
-                      <div className="hcard-amount">{paymentService.formatAmount(p.amount)}</div>
-                      <span className={`status-badge ${meta.cls}`}>{meta.label}</span>
-                    </div>
-                  </div>
-                  {p.items && p.items.length > 0 && (
-                    <div className="hcard-items">
-                      {p.items.map((item, i) => (
-                        <span key={i} className="hcard-item-tag">{item.name} ×{item.qty}</span>
-                      ))}
-                    </div>
-                  )}
-                  {p.transactionRef && (
-                    <div className="hcard-txn">Ref: <code>{p.transactionRef}</code></div>
-                  )}
-                  {p.failureReason && (
-                    <div className="hcard-failure">{p.failureReason}</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
+      <button
+        className="btn btn-primary"
+        onClick={() => navigate("/checkout")}
+      >
+        + New Order
+      </button>
+    </header>
+
+    {loading && (
+      <section className="history-loading">
+        <progress className="spinner" />
+        <p>Loading…</p>
+      </section>
+    )}
+
+    {error && (
+      <aside className="alert alert-danger">
+        {error}
+      </aside>
+    )}
+
+    {!loading && !error && payments.length === 0 && (
+      <section className="history-empty">
+        <p className="empty-icon">🧾</p>
+
+        <h3>No payments yet</h3>
+
+        <p>
+          Your payment history will appear here after you place an order.
+        </p>
+
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate("/checkout")}
+        >
+          Place your first order
+        </button>
+      </section>
+    )}
+
+    {!loading && payments.length > 0 && (
+      <section className="history-list">
+        {payments.map((p) => {
+          const meta =
+            STATUS_META[p.status] || {
+              label: p.status,
+              cls: "pending",
+            };
+
+          return (
+            <article key={p.id} className="history-card">
+              <header className="hcard-top">
+                <section className="hcard-method">
+                  <strong className="hcard-method-icon">
+                    {METHOD_ICON[p.method] || "💰"}
+                  </strong>
+
+                  <section>
+                    <p className="hcard-order-id">{p.orderId}</p>
+                    <time className="hcard-date">
+                      {formatDate(p.createdAt)}
+                    </time>
+                  </section>
+                </section>
+
+                <section className="hcard-right">
+                  <p className="hcard-amount">
+                    {paymentService.formatAmount(p.amount)}
+                  </p>
+
+                  <mark className={`status-badge ${meta.cls}`}>
+                    {meta.label}
+                  </mark>
+                </section>
+              </header>
+
+              {p.items && p.items.length > 0 && (
+                <section className="hcard-items">
+                  {p.items.map((item, i) => (
+                    <mark key={i} className="hcard-item-tag">
+                      {item.name} ×{item.qty}
+                    </mark>
+                  ))}
+                </section>
+              )}
+
+              {p.transactionRef && (
+                <p className="hcard-txn">
+                  Ref: <code>{p.transactionRef}</code>
+                </p>
+              )}
+
+              {p.failureReason && (
+                <aside className="hcard-failure">
+                  {p.failureReason}
+                </aside>
+              )}
+            </article>
+          );
+        })}
+      </section>
+    )}
+
+  </section>
+
+</main>
   );
 }

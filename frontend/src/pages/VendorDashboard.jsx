@@ -541,40 +541,43 @@ const reduceStockForOrderItems = async (orderItems) => {
     groupedOrders.ready.length;
 
   const renderVendorOrderCard = (order) => (
-    <div
-      key={order.id}
-      className={`
-        order-card
-        ${order.id === latestOrderId ? "highlight latest-order-card" : ""}
-        ${order.status === "ready" ? "ready-card" : ""}
-      `}
-    >
-      <div className="order-card-top">
-        <h3>Order #{order.orderId?.slice(0, 10) || order.id.slice(0, 6)}</h3>
+  <article
+    key={order.id}
+    className={`
+      order-card
+      ${order.id === latestOrderId ? "highlight latest-order-card" : ""}
+      ${order.status === "ready" ? "ready-card" : ""}
+    `}
+  >
+    <header className="order-card-top">
+      <h3>
+        Order #{order.orderId?.slice(0, 10) || order.id.slice(0, 6)}
+      </h3>
 
-        <span className={`order-status-label status-${order.status}`}>
-          {order.status?.toUpperCase()}
-        </span>
-      </div>
+      <mark className={`order-status-label status-${order.status}`}>
+        {order.status?.toUpperCase()}
+      </mark>
+    </header>
 
-      <p className="paid-badge">💰 Payment Confirmed</p>
+    <p className="paid-badge">💰 Payment Confirmed</p>
 
-      <p className="order-info">
-        <strong>Student:</strong> #{order.studentId?.slice(0, 6)}
+    <p className="order-info">
+      <strong>Student:</strong> #{order.studentId?.slice(0, 6)}
+    </p>
+
+    {order.orderId && (
+      <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+        Shared Order ID: {order.orderId}
       </p>
+    )}
 
-      {order.orderId && (
-        <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-          Shared Order ID: {order.orderId}
-        </p>
-      )}
+    {order.vendorOrderId && (
+      <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+        Vendor Order ID: {order.vendorOrderId}
+      </p>
+    )}
 
-      {order.vendorOrderId && (
-        <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-          Vendor Order ID: {order.vendorOrderId}
-        </p>
-      )}
-
+    <section className="order-status-section">
       <label className="order-label">Update Status</label>
 
       <select
@@ -595,23 +598,28 @@ const reduceStockForOrderItems = async (orderItems) => {
           </option>
         ))}
       </select>
+    </section>
 
-      <p className="order-total">Total: R{(order.total || 0).toFixed(2)}</p>
+    <p className="order-total">
+      Total: R{(order.total || 0).toFixed(2)}
+    </p>
 
-      <div className="order-items">
-        <strong>Items</strong>
+    <section className="order-items">
+      <h4>Items</h4>
 
+      <ul>
         {(order.items || []).map((item, index) => (
-          <p key={index}>
+          <li key={index}>
             {item.name} × {item.quantity}
-          </p>
+          </li>
         ))}
-      </div>
-    </div>
-  );
+      </ul>
+    </section>
+  </article>
+);
 
   return (
-    <div className="app">
+    <main className="app">
       <header className="header">
         <h1>{vendorProfile?.businessName || "Vendor Dashboard"}</h1>
         <p>
@@ -620,459 +628,521 @@ const reduceStockForOrderItems = async (orderItems) => {
         </p>
       </header>
 
-      <div className="analytics-btn-container" style={{ textAlign: "center" }}>
-        <Link to="/vendor/analytics">
-          <button type="button" className="analytics-dashboard-btn">
-            📈 View Analytics
-          </button>
-        </Link>
-      </div>
+      <nav
+          className="analytics-btn-container"
+          style={{ textAlign: "center" }}
+      >
+          <Link to="/vendor/analytics">
+            <button
+              type="button"
+              className="analytics-dashboard-btn"
+      >
+          📈 View Analytics
+            </button>
+          </Link>
+      </nav>
 
-      <main className="vendor-dashboard-layout">
-        <section className="orders-section">
-          <div className="orders-header">
-            <div>
-              <h2>Incoming Orders</h2>
-              <p>Manage and update student orders</p>
-            </div>
+     <main className="vendor-dashboard-layout">
+      <section className="orders-section">
+      <header className="orders-header">
+      <section>
+        <h2>Incoming Orders</h2>
+        <p>Manage and update student orders</p>
+      </section>
 
-            <span className="order-count">{activeOrderCount} active</span>
-          </div>
+      <p className="order-count">
+        {activeOrderCount} active
+      </p>
+      </header>
 
-          {groupedOrders.ready.length > 0 && (
-            <div className="order-section">
-              <h2>🔔 Ready</h2>
-              <div className="orders-row">
-                {groupedOrders.ready.map(renderVendorOrderCard)}
-              </div>
-            </div>
-          )}
+    {groupedOrders.ready.length > 0 && (
+      <section className="order-section">
+        <h2>🔔 Ready</h2>
 
-          {groupedOrders.preparing.length > 0 && (
-            <div className="order-section">
-              <h2>👨‍🍳 Preparing</h2>
-              <div className="orders-row">
-                {groupedOrders.preparing.map(renderVendorOrderCard)}
-              </div>
-            </div>
-          )}
+        <section className="orders-row">
+          {groupedOrders.ready.map(renderVendorOrderCard)}
+        </section>
+      </section>
+    )}
 
-          {groupedOrders.paid.length > 0 && (
-            <div className="order-section">
-              <h2>🟡 Paid</h2>
-              <div className="orders-row">
-                {groupedOrders.paid.map(renderVendorOrderCard)}
-              </div>
-            </div>
-          )}
+    {groupedOrders.preparing.length > 0 && (
+      <section className="order-section">
+        <h2>👨‍🍳 Preparing</h2>
 
-          {activeOrderCount === 0 && <p>No active orders right now.</p>}
+        <section className="orders-row">
+          {groupedOrders.preparing.map(renderVendorOrderCard)}
+        </section>
+      </section>
+    )}
 
-          {groupedOrders.completed.length > 0 && (
-            <div className="completed-orders-section">
-              <button
-                type="button"
-                className="completed-toggle-btn"
-                onClick={() => setShowCompleted(!showCompleted)}
+    {groupedOrders.paid.length > 0 && (
+      <section className="order-section">
+        <h2>🟡 Paid</h2>
+
+        <section className="orders-row">
+          {groupedOrders.paid.map(renderVendorOrderCard)}
+        </section>
+      </section>
+    )}
+
+    {activeOrderCount === 0 && (
+      <p>No active orders right now.</p>
+    )}
+
+    {groupedOrders.completed.length > 0 && (
+      <section className="completed-orders-section">
+        <button
+          type="button"
+          className="completed-toggle-btn"
+          onClick={() => setShowCompleted(!showCompleted)}
+        >
+          {showCompleted
+            ? "Hide Completed Orders"
+            : `View Completed Orders (${groupedOrders.completed.length})`}
+        </button>
+
+        {showCompleted && (
+          <section className="orders-row">
+            {groupedOrders.completed.map(renderVendorOrderCard)}
+          </section>
+        )}
+      </section>
+    )}
+  </section>
+
+  <section className="dashboard-grid">
+    <section className="form-section">
+      <h2>
+        {editingItemId !== null
+          ? "Edit Menu Item"
+          : "Add Menu Item"}
+      </h2>
+
+      <form
+        className="menu-form"
+        onSubmit={handleSubmit}
+        onPaste={handleImagePaste}
+      >
+        <input
+          type="text"
+          name="name"
+          placeholder="Item name"
+          value={formData.name}
+          onChange={handleInputChange}
+        />
+
+        <textarea
+          name="description"
+          placeholder="Item description"
+          value={formData.description}
+          onChange={handleInputChange}
+        ></textarea>
+
+        <input
+          type="text"
+          name="price"
+          placeholder="Price e.g. R65.00"
+          value={formData.price}
+          onChange={handleInputChange}
+        />
+
+        <input
+          type="number"
+          name="stock"
+          placeholder="Stock quantity"
+          value={formData.stock}
+          onChange={handleInputChange}
+          min="0"
+        />
+
+        <input
+          type="text"
+          name="photoUrl"
+          placeholder="Photo URL"
+          value={formData.photoUrl}
+          onChange={handleInputChange}
+        />
+
+        <section className="checkbox-group-section">
+          <h4>Dietary Tags</h4>
+
+          <p className="helper-text">
+            Select all dietary labels that apply to this item.
+          </p>
+
+          <section className="checkbox-options-grid">
+            {DIETARY_TAG_OPTIONS.map((option) => (
+              <label
+                key={option.id}
+                className="checkbox-option"
               >
-                {showCompleted
-                  ? "Hide Completed Orders"
-                  : `View Completed Orders (${groupedOrders.completed.length})`}
-              </button>
-
-              {showCompleted && (
-                <div className="orders-row">
-                  {groupedOrders.completed.map(renderVendorOrderCard)}
-                </div>
-              )}
-            </div>
-          )}
+                <input
+                  type="checkbox"
+                  checked={(formData.dietaryTags || []).includes(
+                    option.id
+                  )}
+                  onChange={() =>
+                    handleMultiSelectChange(
+                      "dietaryTags",
+                      option.id
+                    )
+                  }
+                />
+                {option.label}
+              </label>
+            ))}
+          </section>
         </section>
 
-        <div className="dashboard-grid">
-          <section className="form-section">
-            <h2>{editingItemId !== null ? "Edit Menu Item" : "Add Menu Item"}</h2>
+        <section className="checkbox-group-section">
+          <h4>Allergens</h4>
 
-            <form
-              className="menu-form"
-              onSubmit={handleSubmit}
-              onPaste={handleImagePaste}
-            >
-              <input
-                type="text"
-                name="name"
-                placeholder="Item name"
-                value={formData.name}
-                onChange={handleInputChange}
-              />
+          <p className="helper-text">
+            Select allergens that the item contains or may contain.
+          </p>
 
-              <textarea
-                name="description"
-                placeholder="Item description"
-                value={formData.description}
-                onChange={handleInputChange}
-              ></textarea>
-
-              <input
-                type="text"
-                name="price"
-                placeholder="Price e.g. R65.00"
-                value={formData.price}
-                onChange={handleInputChange}
-              />
-
-              <input
-                type="number"
-                name="stock"
-                placeholder="Stock quantity"
-                value={formData.stock}
-                onChange={handleInputChange}
-                min="0"
-              />
-
-              <input
-                type="text"
-                name="photoUrl"
-                placeholder="Photo URL"
-                value={formData.photoUrl}
-                onChange={handleInputChange}
-              />
-
-              <div className="checkbox-group-section">
-                <h4>Dietary Tags</h4>
-                <p className="helper-text">
-                  Select all dietary labels that apply to this item.
-                </p>
-
-                <div className="checkbox-options-grid">
-                  {DIETARY_TAG_OPTIONS.map((option) => (
-                    <label key={option.id} className="checkbox-option">
-                      <input
-                        type="checkbox"
-                        checked={(formData.dietaryTags || []).includes(
-                          option.id
-                        )}
-                        onChange={() =>
-                          handleMultiSelectChange("dietaryTags", option.id)
-                        }
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="checkbox-group-section">
-                <h4>Allergens</h4>
-                <p className="helper-text">
-                  Select allergens that the item contains or may contain.
-                </p>
-
-                <div className="checkbox-options-grid">
-                  {ALLERGEN_OPTIONS.map((option) => (
-                    <label key={option.id} className="checkbox-option">
-                      <input
-                        type="checkbox"
-                        checked={(formData.allergens || []).includes(option.id)}
-                        onChange={() =>
-                          handleMultiSelectChange("allergens", option.id)
-                        }
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {imagePreview && (
-                <div style={{ marginTop: "10px", textAlign: "center" }}>
-                  <p>Image preview:</p>
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      width: "160px",
-                      height: "120px",
-                      objectFit: "cover",
-                      borderRadius: "10px",
-                    }}
-                  />
-                </div>
-              )}
-
-              <label className="checkbox-row">
+          <section className="checkbox-options-grid">
+            {ALLERGEN_OPTIONS.map((option) => (
+              <label
+                key={option.id}
+                className="checkbox-option"
+              >
                 <input
                   type="checkbox"
-                  name="available"
-                  checked={formData.available}
-                  onChange={handleInputChange}
+                  checked={(formData.allergens || []).includes(
+                    option.id
+                  )}
+                  onChange={() =>
+                    handleMultiSelectChange(
+                      "allergens",
+                      option.id
+                    )
+                  }
                 />
-                Available
+                {option.label}
               </label>
-
-              <div className="form-buttons">
-                <button type="submit">
-                  {editingItemId !== null ? "Update Item" : "Add Item"}
-                </button>
-
-                {editingItemId !== null && (
-                  <button
-                    type="button"
-                    className="cancel-btn"
-                    onClick={handleCancelEdit}
-                  >
-                    Cancel Edit
-                  </button>
-                )}
-              </div>
-            </form>
+            ))}
           </section>
+        </section>
 
-          <section className="menu-section">
-            <h2>Current Menu</h2>
+        {imagePreview && (
+          <figure
+            style={{
+              marginTop: "10px",
+              textAlign: "center",
+            }}
+          >
+            <figcaption>Image preview:</figcaption>
 
-            <div className="menu-list">
-              {menuItems.map((item) => (
-                <div className="menu-card" key={item.id}>
-                  {item.photoUrl ? (
-                    <img
-                      src={item.photoUrl}
-                      alt={item.name}
-                      className="menu-image"
-                    />
-                  ) : (
-                    <div className="menu-image-placeholder">
-                      Image not available yet
-                    </div>
-                  )}
+            <img
+              src={imagePreview}
+              alt="Preview"
+              style={{
+                width: "160px",
+                height: "120px",
+                objectFit: "cover",
+                borderRadius: "10px",
+              }}
+            />
+          </figure>
+        )}
 
-                  <h3>{item.name}</h3>
-                  <p>{item.description}</p>
-                  <p className="price">{item.price}</p>
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            name="available"
+            checked={formData.available}
+            onChange={handleInputChange}
+          />
+          Available
+        </label>
 
-                  {item.dietaryTags?.length > 0 && (
-                    <div className="tag-section">
-                      <strong>Dietary:</strong>
-                      <div className="tag-row">
-                        {item.dietaryTags.map((tagId) => (
-                          <span key={tagId} className="dietary-tag">
-                            {getDietaryLabel(tagId)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+        <footer className="form-buttons">
+          <button type="submit">
+            {editingItemId !== null
+              ? "Update Item"
+              : "Add Item"}
+          </button>
 
-                  {item.allergens?.length > 0 && (
-                    <div className="tag-section">
-                      <strong>Allergens:</strong>
-                      <div className="tag-row">
-                        {item.allergens.map((allergenId) => (
-                          <span key={allergenId} className="allergen-tag">
-                            {getAllergenLabel(allergenId)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+          {editingItemId !== null && (
+            <button
+              type="button"
+              className="cancel-btn"
+              onClick={handleCancelEdit}
+            >
+              Cancel Edit
+            </button>
+          )}
+        </footer>
+      </form>
+    </section>
 
-                  <p>
-                    <strong>Stock:</strong> {item.stock ?? 0}
-                  </p>
+    <section className="menu-section">
+      <h2>Current Menu</h2>
 
-                  <p
-                    className={
-                      (item.stock ?? 0) > 0
-                        ? "status available"
-                        : "status sold-out"
-                    }
-                  >
-                    {(item.stock ?? 0) > 0 ? "Available" : "Sold Out"}
-                  </p>
+      <section className="menu-list">
+        {menuItems.map((item) => (
+          <article className="menu-card" key={item.id}>
+            {item.photoUrl ? (
+              <img
+                src={item.photoUrl}
+                alt={item.name}
+                className="menu-image"
+              />
+            ) : (
+              <section className="menu-image-placeholder">
+                <p>Image not available yet</p>
+              </section>
+            )}
 
-                  <div className="button-row">
-                    <button
-                      className="edit-btn"
-                      type="button"
-                      onClick={() => handleEditClick(item)}
+            <h3>{item.name}</h3>
+
+            <p>{item.description}</p>
+
+            <p className="price">{item.price}</p>
+
+            {item.dietaryTags?.length > 0 && (
+              <section className="tag-section">
+                <strong>Dietary:</strong>
+
+                <section className="tag-row">
+                  {item.dietaryTags.map((tagId) => (
+                    <mark
+                      key={tagId}
+                      className="dietary-tag"
                     >
-                      Edit
-                    </button>
+                      {getDietaryLabel(tagId)}
+                    </mark>
+                  ))}
+                </section>
+              </section>
+            )}
 
-                    <button
-                      className="soldout-btn"
-                      type="button"
-                      onClick={() => toggleAvailability(item.id)}
+            {item.allergens?.length > 0 && (
+              <section className="tag-section">
+                <strong>Allergens:</strong>
+
+                <section className="tag-row">
+                  {item.allergens.map((allergenId) => (
+                    <mark
+                      key={allergenId}
+                      className="allergen-tag"
                     >
-                      {(item.stock ?? 0) > 0
-                        ? "Mark as Sold Out"
-                        : "Mark as Available"}
-                    </button>
+                      {getAllergenLabel(allergenId)}
+                    </mark>
+                  ))}
+                </section>
+              </section>
+            )}
 
-                    <button
-                      className="delete-btn"
-                      type="button"
-                      onClick={() => handleDeleteItem(item.id, item.name)}
-                      style={{ backgroundColor: "#e74c3c", color: "white" }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      </main>
+            <p>
+              <strong>Stock:</strong> {item.stock ?? 0}
+            </p>
 
-      {isEditModalOpen && selectedItem && (
-        <div className="modal-overlay" onClick={handleCancelEdit}>
-          <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Edit Menu Item</h2>
+            <p
+              className={
+                (item.stock ?? 0) > 0
+                  ? "status available"
+                  : "status sold-out"
+              }
+            >
+              {(item.stock ?? 0) > 0
+                ? "Available"
+                : "Sold Out"}
+            </p>
+
+            <footer className="button-row">
+              <button
+                className="edit-btn"
+                type="button"
+                onClick={() => handleEditClick(item)}
+              >
+                Edit
+              </button>
 
               <button
+                className="soldout-btn"
                 type="button"
-                className="modal-close-btn"
-                onClick={handleCancelEdit}
+                onClick={() => toggleAvailability(item.id)}
               >
-                ×
+                {(item.stock ?? 0) > 0
+                  ? "Mark as Sold Out"
+                  : "Mark as Available"}
               </button>
-            </div>
 
-            <form
-              className="menu-form"
-              onSubmit={handleSubmit}
-              onPaste={handleImagePaste}
-            >
-              <input
-                type="text"
-                name="name"
-                placeholder="Item name"
-                value={formData.name}
-                onChange={handleInputChange}
-              />
+              <button
+                className="delete-btn"
+                type="button"
+                onClick={() =>
+                  handleDeleteItem(item.id, item.name)
+                }
+                style={{
+                  backgroundColor: "#e74c3c",
+                  color: "white",
+                }}
+              >
+                Delete
+              </button>
+            </footer>
+          </article>
+        ))}
+      </section>
+    </section>
+  </section>
+</main>
 
-              <textarea
-                name="description"
-                placeholder="Item description"
-                value={formData.description}
-                onChange={handleInputChange}
-              ></textarea>
+      {isEditModalOpen && selectedItem && (
+  <aside className="modal-overlay" onClick={handleCancelEdit}>
+    <section
+      className="edit-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <header className="modal-header">
+        <h2>Edit Menu Item</h2>
 
-              <input
-                type="text"
-                name="price"
-                placeholder="Price e.g. R65.00"
-                value={formData.price}
-                onChange={handleInputChange}
-              />
+        <button
+          type="button"
+          className="modal-close-btn"
+          onClick={handleCancelEdit}
+          aria-label="Close edit menu item modal"
+        >
+          ×
+        </button>
+      </header>
 
-              <input
-                type="number"
-                name="stock"
-                placeholder="Stock quantity"
-                value={formData.stock}
-                onChange={handleInputChange}
-                min="0"
-              />
+      <form
+        className="menu-form"
+        onSubmit={handleSubmit}
+        onPaste={handleImagePaste}
+      >
+        <input
+          type="text"
+          name="name"
+          placeholder="Item name"
+          value={formData.name}
+          onChange={handleInputChange}
+        />
 
-              <input
-                type="text"
-                name="photoUrl"
-                placeholder="Photo URL"
-                value={formData.photoUrl}
-                onChange={handleInputChange}
-              />
+        <textarea
+          name="description"
+          placeholder="Item description"
+          value={formData.description}
+          onChange={handleInputChange}
+        ></textarea>
 
-              <div className="checkbox-group-section">
-                <h4>Dietary Tags</h4>
-                <p className="helper-text">
-                  Select all dietary labels that apply to this item.
-                </p>
+        <input
+          type="text"
+          name="price"
+          placeholder="Price e.g. R65.00"
+          value={formData.price}
+          onChange={handleInputChange}
+        />
 
-                <div className="checkbox-options-grid">
-                  {DIETARY_TAG_OPTIONS.map((option) => (
-                    <label key={option.id} className="checkbox-option">
-                      <input
-                        type="checkbox"
-                        checked={(formData.dietaryTags || []).includes(
-                          option.id
-                        )}
-                        onChange={() =>
-                          handleMultiSelectChange("dietaryTags", option.id)
-                        }
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
+        <input
+          type="number"
+          name="stock"
+          placeholder="Stock quantity"
+          value={formData.stock}
+          onChange={handleInputChange}
+          min="0"
+        />
 
-              <div className="checkbox-group-section">
-                <h4>Allergens</h4>
-                <p className="helper-text">
-                  Select allergens that the item contains or may contain.
-                </p>
+        <input
+          type="text"
+          name="photoUrl"
+          placeholder="Photo URL"
+          value={formData.photoUrl}
+          onChange={handleInputChange}
+        />
 
-                <div className="checkbox-options-grid">
-                  {ALLERGEN_OPTIONS.map((option) => (
-                    <label key={option.id} className="checkbox-option">
-                      <input
-                        type="checkbox"
-                        checked={(formData.allergens || []).includes(option.id)}
-                        onChange={() =>
-                          handleMultiSelectChange("allergens", option.id)
-                        }
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
-              </div>
+        <section className="checkbox-group-section">
+          <h4>Dietary Tags</h4>
 
-              {imagePreview && (
-                <div style={{ marginTop: "10px", textAlign: "center" }}>
-                  <p>Image preview:</p>
+          <p className="helper-text">
+            Select all dietary labels that apply to this item.
+          </p>
 
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      width: "160px",
-                      height: "120px",
-                      objectFit: "cover",
-                      borderRadius: "10px",
-                    }}
-                  />
-                </div>
-              )}
-
-              <label className="checkbox-row">
+          <section className="checkbox-options-grid">
+            {DIETARY_TAG_OPTIONS.map((option) => (
+              <label key={option.id} className="checkbox-option">
                 <input
                   type="checkbox"
-                  name="available"
-                  checked={formData.available}
-                  onChange={handleInputChange}
+                  checked={(formData.dietaryTags || []).includes(option.id)}
+                  onChange={() =>
+                    handleMultiSelectChange("dietaryTags", option.id)
+                  }
                 />
-                Available
+                {option.label}
               </label>
+            ))}
+          </section>
+        </section>
 
-              <div className="form-buttons">
-                <button type="submit">Update Item</button>
+        <section className="checkbox-group-section">
+          <h4>Allergens</h4>
 
-                <button
-                  type="button"
-                  className="cancel-btn"
-                  onClick={handleCancelEdit}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-            )}
-    </div>
+          <p className="helper-text">
+            Select allergens that the item contains or may contain.
+          </p>
+
+          <section className="checkbox-options-grid">
+            {ALLERGEN_OPTIONS.map((option) => (
+              <label key={option.id} className="checkbox-option">
+                <input
+                  type="checkbox"
+                  checked={(formData.allergens || []).includes(option.id)}
+                  onChange={() =>
+                    handleMultiSelectChange("allergens", option.id)
+                  }
+                />
+                {option.label}
+              </label>
+            ))}
+          </section>
+        </section>
+
+        {imagePreview && (
+          <figure style={{ marginTop: "10px", textAlign: "center" }}>
+            <figcaption>Image preview:</figcaption>
+
+            <img
+              src={imagePreview}
+              alt="Preview"
+              style={{
+                width: "160px",
+                height: "120px",
+                objectFit: "cover",
+                borderRadius: "10px",
+              }}
+            />
+          </figure>
+        )}
+
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            name="available"
+            checked={formData.available}
+            onChange={handleInputChange}
+          />
+          Available
+        </label>
+
+        <footer className="form-buttons">
+          <button type="submit">Update Item</button>
+
+          <button
+            type="button"
+            className="cancel-btn"
+            onClick={handleCancelEdit}
+          >
+            Cancel
+          </button>
+        </footer>
+      </form>
+    </section>
+  </aside>
+)}
+    </main>
   );
 }
