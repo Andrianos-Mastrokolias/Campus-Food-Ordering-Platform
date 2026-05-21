@@ -9,9 +9,14 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   const { user, role, status, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+  return (
+    <main>
+      <section>
+        <p>Loading...</p>
+      </section>
+    </main>
+  );
   }
-
   // Redirect unauthenticated users back to login.
   if (!user) {
     return <Navigate to="/login" replace />;

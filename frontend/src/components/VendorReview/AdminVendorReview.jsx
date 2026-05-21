@@ -114,243 +114,331 @@ const AdminVendorReview = () => {
   };
 
   const getStatusBadge = (status) => {
-    const badges = {
-      pending: <span className="badge badge-warning">Pending</span>,
-      approved: <span className="badge badge-success">Approved</span>,
-      rejected: <span className="badge badge-danger">Rejected</span>
-    };
-    return badges[status] || <span className="badge badge-secondary">Unknown</span>;
+  const badges = {
+    pending: <mark className="badge badge-warning">Pending</mark>,
+    approved: <mark className="badge badge-success">Approved</mark>,
+    rejected: <mark className="badge badge-danger">Rejected</mark>
   };
 
-  if (loading && !reviewingApp) {
-    return (
-      <div className="admin-vendor-review">
-        <div className="loading">Loading vendor applications...</div>
-      </div>
-    );
-  }
+  return badges[status] || (
+    <mark className="badge badge-secondary">Unknown</mark>
+  );
+};
 
-  if (role !== 'admin') {
-    return (
-      <div className="admin-vendor-review">
-        <div className="alert alert-danger">
-          Access denied. You must be an admin to view this page.
-        </div>
-      </div>
-    );
-  }
-
+if (loading && !reviewingApp) {
   return (
-    <div className="admin-vendor-review">
-      <div className="dashboard-header">
-        <h1>Vendor Application Review</h1>
-        <p>Review and approve vendor registrations</p>
-      </div>
+    <main className="admin-vendor-review">
+      <section className="loading">
+        Loading vendor applications...
+      </section>
+    </main>
+  );
+}
 
-      {error && (
-        <div className="alert alert-danger">
-          <strong>Error:</strong> {error}
-        </div>
-      )}
+if (role !== 'admin') {
+  return (
+    <main className="admin-vendor-review">
+      <section className="alert alert-danger" role="alert">
+        Access denied. You must be an admin to view this page.
+      </section>
+    </main>
+  );
+}
 
-      {success && (
-        <div className="alert alert-success">
-          <strong>Success:</strong> {success}
-        </div>
-      )}
+return (
+  <main className="admin-vendor-review">
+    <header className="dashboard-header">
+      <h1>Vendor Application Review</h1>
+      <p>Review and approve vendor registrations</p>
+    </header>
 
-      {stats && (
-        <div className="stats-container">
-          <div className="stat-card">
-            <div className="stat-value">{stats.total}</div>
-            <div className="stat-label">Total Applications</div>
-          </div>
-          <div className="stat-card pending">
-            <div className="stat-value">{stats.pending}</div>
-            <div className="stat-label">Pending Review</div>
-          </div>
-          <div className="stat-card approved">
-            <div className="stat-value">{stats.approved}</div>
-            <div className="stat-label">Approved</div>
-          </div>
-          <div className="stat-card rejected">
-            <div className="stat-value">{stats.rejected}</div>
-            <div className="stat-label">Rejected</div>
-          </div>
-        </div>
-      )}
+    {error && (
+      <section className="alert alert-danger" role="alert">
+        <strong>Error:</strong> {error}
+      </section>
+    )}
 
-      <div className="filter-buttons">
-        <button
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          All ({applications.length})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
-          onClick={() => setFilter('pending')}
-        >
-          Pending ({stats?.pending || 0})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'approved' ? 'active' : ''}`}
-          onClick={() => setFilter('approved')}
-        >
-          Approved ({stats?.approved || 0})
-        </button>
-        <button
-          className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`}
-          onClick={() => setFilter('rejected')}
-        >
-          Rejected ({stats?.rejected || 0})
-        </button>
-      </div>
+    {success && (
+      <section className="alert alert-success" role="status">
+        <strong>Success:</strong> {success}
+      </section>
+    )}
 
-      <div className="applications-container">
-        {filteredApplications.length === 0 ? (
-          <div className="no-applications">
-            <p>No {filter !== 'all' ? filter : ''} vendor applications found.</p>
-          </div>
-        ) : (
-          <div className="applications-grid">
-            {filteredApplications.map((app) => (
-              <div key={app.id} className={`application-card ${app.status}`}>
-                <div className="card-header">
-                  <div className="vendor-info">
+    {stats && (
+      <section className="stats-container">
+        <article className="stat-card">
+          <h2 className="stat-value">{stats.total}</h2>
+          <p className="stat-label">Total Applications</p>
+        </article>
+
+        <article className="stat-card pending">
+          <h2 className="stat-value">{stats.pending}</h2>
+          <p className="stat-label">Pending Review</p>
+        </article>
+
+        <article className="stat-card approved">
+          <h2 className="stat-value">{stats.approved}</h2>
+          <p className="stat-label">Approved</p>
+        </article>
+
+        <article className="stat-card rejected">
+          <h2 className="stat-value">{stats.rejected}</h2>
+          <p className="stat-label">Rejected</p>
+        </article>
+      </section>
+    )}
+
+    <nav className="filter-buttons" aria-label="Application Filters">
+      <button
+        className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+        onClick={() => setFilter('all')}
+      >
+        All ({applications.length})
+      </button>
+
+      <button
+        className={`filter-btn ${filter === 'pending' ? 'active' : ''}`}
+        onClick={() => setFilter('pending')}
+      >
+        Pending ({stats?.pending || 0})
+      </button>
+
+      <button
+        className={`filter-btn ${filter === 'approved' ? 'active' : ''}`}
+        onClick={() => setFilter('approved')}
+      >
+        Approved ({stats?.approved || 0})
+      </button>
+
+      <button
+        className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`}
+        onClick={() => setFilter('rejected')}
+      >
+        Rejected ({stats?.rejected || 0})
+      </button>
+    </nav>
+
+    <section className="applications-container">
+      {filteredApplications.length === 0 ? (
+        <section className="no-applications">
+          <p>
+            No {filter !== 'all' ? filter : ''} vendor applications found.
+          </p>
+        </section>
+      ) : (
+        <ul className="applications-grid">
+          {filteredApplications.map((app) => (
+            <li
+              key={app.id}
+              className={`application-card ${app.status}`}
+            >
+              <article>
+                <header className="card-header">
+                  <section className="vendor-info">
                     <h3>{app.businessName}</h3>
-                    <p className="applicant">Applied by: {app.userName}</p>
-                    <p className="email">{app.userEmail}</p>
-                  </div>
-                  <div className="status-badge">
+                    <p className="applicant">
+                      Applied by: {app.userName}
+                    </p>
+                    <address className="email">
+                      {app.userEmail}
+                    </address>
+                  </section>
+
+                  <section className="status-badge">
                     {getStatusBadge(app.status)}
-                  </div>
-                </div>
+                  </section>
+                </header>
 
-                <div className="card-body">
-                  <div className="info-row">
-                    <span className="label">Submitted:</span>
-                    <span className="value">{formatDate(app.createdAt)}</span>
-                  </div>
+                <section className="card-body">
+                  <p className="info-row">
+                    <strong className="label">Submitted:</strong>
+                    <time className="value">
+                      {formatDate(app.createdAt)}
+                    </time>
+                  </p>
 
-                  <div className="business-section">
+                  <section className="business-section">
                     <strong>Business Description:</strong>
-                    <p className="description-text">{app.businessDescription}</p>
-                  </div>
+                    <p className="description-text">
+                      {app.businessDescription}
+                    </p>
+                  </section>
 
-                  <div className="contact-section">
-                    <div className="info-row">
-                      <span className="label">📞 Phone:</span>
-                      <span className="value">{app.businessPhone}</span>
-                    </div>
-                    <div className="info-row">
-                      <span className="label">📍 Location:</span>
-                      <span className="value">{app.businessAddress}</span>
-                    </div>
-                  </div>
+                  <section className="contact-section">
+                    <p className="info-row">
+                      <strong className="label">📞 Phone:</strong>
+                      <span className="value">
+                        {app.businessPhone}
+                      </span>
+                    </p>
+
+                    <p className="info-row">
+                      <strong className="label">📍 Location:</strong>
+                      <span className="value">
+                        {app.businessAddress}
+                      </span>
+                    </p>
+                  </section>
 
                   {app.reviewedBy && (
                     <>
-                      <div className="info-row">
-                        <span className="label">Reviewed:</span>
-                        <span className="value">{formatDate(app.reviewedAt)}</span>
-                      </div>
+                      <p className="info-row">
+                        <strong className="label">Reviewed:</strong>
+                        <time className="value">
+                          {formatDate(app.reviewedAt)}
+                        </time>
+                      </p>
+
                       {app.reviewNotes && (
-                        <div className="review-section">
+                        <section className="review-section">
                           <strong>Review Notes:</strong>
-                          <p className="review-text">{app.reviewNotes}</p>
-                        </div>
+                          <p className="review-text">
+                            {app.reviewNotes}
+                          </p>
+                        </section>
                       )}
                     </>
                   )}
-                </div>
+                </section>
 
                 {app.status === 'pending' && (
-                  <div className="card-actions">
+                  <footer className="card-actions">
                     <button
                       className="btn btn-success"
-                      onClick={() => handleReviewClick(app, 'approve')}
+                      onClick={() =>
+                        handleReviewClick(app, 'approve')
+                      }
                     >
                       Approve
                     </button>
+
                     <button
                       className="btn btn-danger"
-                      onClick={() => handleReviewClick(app, 'reject')}
+                      onClick={() =>
+                        handleReviewClick(app, 'reject')
+                      }
                     >
                       Reject
                     </button>
-                  </div>
+                  </footer>
                 )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {reviewingApp && (
-        <div className="modal-overlay" onClick={() => setReviewingApp(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>
-                {reviewAction === 'approve' ? 'Approve' : 'Reject'} Vendor Application
-              </h2>
-              <button
-                className="close-btn"
-                onClick={() => setReviewingApp(null)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div className="applicant-summary">
-                <p><strong>Business Name:</strong> {reviewingApp.businessName}</p>
-                <p><strong>Applicant:</strong> {reviewingApp.userName}</p>
-                <p><strong>Email:</strong> {reviewingApp.userEmail}</p>
-                <p><strong>Phone:</strong> {reviewingApp.businessPhone}</p>
-                <p><strong>Location:</strong> {reviewingApp.businessAddress}</p>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="reviewNotes">
-                  {reviewAction === 'approve' ? 'Review Notes (Optional)' : 'Reason for Rejection *'}
-                </label>
-                <textarea
-                  id="reviewNotes"
-                  className="form-control"
-                  rows="4"
-                  value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder={
-                    reviewAction === 'approve'
-                      ? 'Add any notes about this approval...'
-                      : 'Explain why this application is being rejected...'
-                  }
-                  required={reviewAction === 'reject'}
-                />
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="btn btn-secondary"
-                onClick={() => setReviewingApp(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className={`btn ${reviewAction === 'approve' ? 'btn-success' : 'btn-danger'}`}
-                onClick={handleReviewSubmit}
-                disabled={loading}
-              >
-                {loading ? 'Processing...' : `Confirm ${reviewAction === 'approve' ? 'Approval' : 'Rejection'}`}
-              </button>
-            </div>
-          </div>
-        </div>
+              </article>
+            </li>
+          ))}
+        </ul>
       )}
-    </div>
-  );
+    </section>
+
+    {reviewingApp && (
+      <aside
+        className="modal-overlay"
+        onClick={() => setReviewingApp(null)}
+      >
+        <section
+          className="modal-content"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <header className="modal-header">
+            <h2>
+              {reviewAction === 'approve'
+                ? 'Approve'
+                : 'Reject'}{' '}
+              Vendor Application
+            </h2>
+
+            <button
+              className="close-btn"
+              onClick={() => setReviewingApp(null)}
+              aria-label="Close modal"
+            >
+              ×
+            </button>
+          </header>
+
+          <section className="modal-body">
+            <article className="applicant-summary">
+              <p>
+                <strong>Business Name:</strong>{' '}
+                {reviewingApp.businessName}
+              </p>
+
+              <p>
+                <strong>Applicant:</strong>{' '}
+                {reviewingApp.userName}
+              </p>
+
+              <p>
+                <strong>Email:</strong>{' '}
+                {reviewingApp.userEmail}
+              </p>
+
+              <p>
+                <strong>Phone:</strong>{' '}
+                {reviewingApp.businessPhone}
+              </p>
+
+              <p>
+                <strong>Location:</strong>{' '}
+                {reviewingApp.businessAddress}
+              </p>
+            </article>
+
+            <fieldset className="form-group">
+              <label htmlFor="reviewNotes">
+                {reviewAction === 'approve'
+                  ? 'Review Notes (Optional)'
+                  : 'Reason for Rejection *'}
+              </label>
+
+              <textarea
+                id="reviewNotes"
+                className="form-control"
+                rows="4"
+                value={reviewNotes}
+                onChange={(e) =>
+                  setReviewNotes(e.target.value)
+                }
+                placeholder={
+                  reviewAction === 'approve'
+                    ? 'Add any notes about this approval...'
+                    : 'Explain why this application is being rejected...'
+                }
+                required={reviewAction === 'reject'}
+              />
+            </fieldset>
+          </section>
+
+          <footer className="modal-footer">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setReviewingApp(null)}
+            >
+              Cancel
+            </button>
+
+            <button
+              className={`btn ${
+                reviewAction === 'approve'
+                  ? 'btn-success'
+                  : 'btn-danger'
+              }`}
+              onClick={handleReviewSubmit}
+              disabled={loading}
+            >
+              {loading
+                ? 'Processing...'
+                : `Confirm ${
+                    reviewAction === 'approve'
+                      ? 'Approval'
+                      : 'Rejection'
+                  }`}
+            </button>
+          </footer>
+        </section>
+      </aside>
+    )}
+  </main>
+);
 };
 
 export default AdminVendorReview;

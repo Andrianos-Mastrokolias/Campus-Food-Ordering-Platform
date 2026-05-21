@@ -123,12 +123,14 @@ export default function OrderTracking() {
   };
 
   if (loading) {
-    return (
-      <div className="tracking-container">
+  return (
+    <main className="tracking-container">
+      <section>
         <p>Loading live orders...</p>
-      </div>
-    );
-  }
+      </section>
+    </main>
+  );
+}
 
   const groupedOrders = {
     paid: [],
@@ -149,165 +151,184 @@ export default function OrderTracking() {
   });
 
   const renderOrderCard = (order) => (
-    <div
-      key={order.id}
-      className={`
-  order-card
-  ${order.id === latestOrderId ? "highlight" : ""}
-  ${order.status === "ready" ? "ready-card" : ""}
-`}
-    >
-      <div className="order-top">
-        <h3>Order #{order.orderId?.slice(0, 10)}</h3>
+  <article
+    key={order.id}
+    className={`
+      order-card
+      ${order.id === latestOrderId ? "highlight" : ""}
+      ${order.status === "ready" ? "ready-card" : ""}
+    `}
+  >
+    <header className="order-top">
+      <h3>Order #{order.orderId?.slice(0, 10)}</h3>
 
-        <span
-          className="status-badge"
-          style={{ backgroundColor: getStatusColor(order.status) }}
-        >
-          {order.status?.toUpperCase()}
-        </span>
-      </div>
-
-      <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-        Order Ref: {order.orderId}
-      </p>
-
-      {order.vendorOrderId && (
-        <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-          Ref: {order.vendorOrderId}
-        </p>
-      )}
-
-      <p
-        style={{
-          fontSize: "0.85rem",
-          fontWeight: "600",
-          color: getStatusColor(order.status),
-          marginBottom: "8px",
-        }}
+      <mark
+        className="status-badge"
+        style={{ backgroundColor: getStatusColor(order.status) }}
       >
-        {getStatusLabel(order.status)}
+        {order.status?.toUpperCase()}
+      </mark>
+    </header>
+
+    <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+      Order Ref: {order.orderId}
+    </p>
+
+    {order.vendorOrderId && (
+      <p style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+        Ref: {order.vendorOrderId}
       </p>
+    )}
 
-      <p>
-        Vendor: <strong>{order.vendorName}</strong>
-      </p>
+    <p
+      style={{
+        fontSize: "0.85rem",
+        fontWeight: "600",
+        color: getStatusColor(order.status),
+        marginBottom: "8px",
+      }}
+    >
+      {getStatusLabel(order.status)}
+    </p>
 
-      <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{ width: `${getProgress(order.status)}%` }}
-        />
-      </div>
+    <p>
+      Vendor: <strong>{order.vendorName}</strong>
+    </p>
 
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: "0.65rem",
-        color: "#94a3b8",
-        marginBottom: "10px"
-      }}>
-        <span>Paid</span>
-        <span>Preparing</span>
-        <span>Ready</span>
-        <span>Done</span>
-      </div>
+    <section className="progress-section">
+     <progress
+        className="progress-bar"
+        value={getProgress(order.status)}
+        max="100"
+      >
+      {getProgress(order.status)}%
+    </progress>
 
-      <div>
+      <nav
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: "0.65rem",
+          color: "#94a3b8",
+          marginBottom: "10px",
+        }}
+        aria-label="Order progress"
+      >
+        <p>Paid</p>
+        <p>Preparing</p>
+        <p>Ready</p>
+        <p>Done</p>
+      </nav>
+    </section>
+
+    <section>
+      <ul>
         {(order.items || []).map((item, index) => (
-          <div key={index} className="item-row">
-            <span>{item.name} ×{item.quantity || 1}</span>
-            <span>{item.price}</span>
-          </div>
-        ))}
-      </div>
+          <li key={index} className="item-row">
+            <p>
+              {item.name} ×{item.quantity || 1}
+            </p>
 
-      <div className="total">
-        Total: R{(order.total || 0).toFixed(2)}
-      </div>
-    </div>
-  );
+            <p>{item.price}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <footer className="total">
+      Total: R{(order.total || 0).toFixed(2)}
+    </footer>
+  </article>
+);
 
   return (
-    <div className="tracking-container">
+   <main className="tracking-container">
 
-      <div className="tracking-header">
-        <h1>Live Order Tracking</h1>
-        <p>Your orders update in real time</p>
-        <button
-          className="payment-history-btn"
-          onClick={() => navigate('/payment-history')}
-        >
-          💳 View Payment History
-        </button>
-      </div>
+  <header className="tracking-header">
+    <h1>Live Order Tracking</h1>
 
-      {orders.length === 0 ? (
-        <div className="empty-state">
-          <h3>No orders yet</h3>
-          <p>Once you pay for an order, it will appear here instantly.</p>
-          <button
-            className="pay-now-btn"
-            style={{ marginTop: '12px' }}
-            onClick={() => navigate('/home')}
-          >
-            🛒 Browse Menu
-          </button>
-        </div>
-      ) : (
-        <div className="orders-layout">
-          {groupedOrders.ready.length > 0 && (
-            <div className="order-section">
-              <h2>🔔 Ready</h2>
-              <div className="horizontal-orders">
-                {groupedOrders.ready.map(renderOrderCard)}
-              </div>
-            </div>
-          )}
+    <p>Your orders update in real time</p>
 
-          {groupedOrders.preparing.length > 0 && (
-            <div className="order-section">
-              <h2>👨‍🍳 Preparing</h2>
-              <div className="horizontal-orders">
-                {groupedOrders.preparing.map(renderOrderCard)}
-              </div>
-            </div>
-          )}
+    <button
+      className="payment-history-btn"
+      onClick={() => navigate('/payment-history')}
+    >
+      💳 View Payment History
+    </button>
+  </header>
 
-          {groupedOrders.paid.length > 0 && (
-            <div className="order-section">
-              <h2>🟡 Paid</h2>
+  {orders.length === 0 ? (
+    <section className="empty-state">
+      <h3>No orders yet</h3>
 
-              <div className="horizontal-orders">
-                {groupedOrders.paid.map(renderOrderCard)}
-              </div>
-            </div>
-          )}
+      <p>
+        Once you pay for an order, it will appear here instantly.
+      </p>
 
+      <button
+        className="pay-now-btn"
+        style={{ marginTop: '12px' }}
+        onClick={() => navigate('/home')}
+      >
+        🛒 Browse Menu
+      </button>
+    </section>
+  ) : (
+    <section className="orders-layout">
 
-          {groupedOrders.completed.length > 0 && (
-            <div className="order-section">
+      {groupedOrders.ready.length > 0 && (
+        <section className="order-section">
+          <h2>🔔 Ready</h2>
 
-              <button
-                className="completed-toggle-btn"
-                onClick={() => setShowCompleted(!showCompleted)}
-              >
-                {showCompleted
-                  ? "Hide Completed Orders"
-                  : `View Completed Orders (${groupedOrders.completed.length})`}
-              </button>
-
-              {showCompleted && (
-                <div className="orders-grid">
-                  {groupedOrders.completed.map(renderOrderCard)}
-                </div>
-              )}
-
-            </div>
-          )}
-
-        </div>
+          <section className="horizontal-orders">
+            {groupedOrders.ready.map(renderOrderCard)}
+          </section>
+        </section>
       )}
-    </div>
+
+      {groupedOrders.preparing.length > 0 && (
+        <section className="order-section">
+          <h2>👨‍🍳 Preparing</h2>
+
+          <section className="horizontal-orders">
+            {groupedOrders.preparing.map(renderOrderCard)}
+          </section>
+        </section>
+      )}
+
+      {groupedOrders.paid.length > 0 && (
+        <section className="order-section">
+          <h2>🟡 Paid</h2>
+
+          <section className="horizontal-orders">
+            {groupedOrders.paid.map(renderOrderCard)}
+          </section>
+        </section>
+      )}
+
+      {groupedOrders.completed.length > 0 && (
+        <section className="order-section">
+
+          <button
+            className="completed-toggle-btn"
+            onClick={() => setShowCompleted(!showCompleted)}
+          >
+            {showCompleted
+              ? "Hide Completed Orders"
+              : `View Completed Orders (${groupedOrders.completed.length})`}
+          </button>
+
+          {showCompleted && (
+            <section className="orders-grid">
+              {groupedOrders.completed.map(renderOrderCard)}
+            </section>
+          )}
+
+        </section>
+      )}
+
+    </section>
+  )}
+</main>
   );
 }

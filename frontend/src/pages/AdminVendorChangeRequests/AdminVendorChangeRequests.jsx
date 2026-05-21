@@ -82,97 +82,210 @@ export default function AdminVendorChangeRequests() {
   }
 
   return (
-    <div className="admin-change-page">
-      <div className="admin-change-header">
-        <h1>Vendor Detail Change Requests</h1>
-        <p>Review vendor requests to update approved shop details.</p>
-      </div>
+    <main className="admin-change-page">
+  <header className="admin-change-header">
+    <h1>Vendor Detail Change Requests</h1>
+    <p>Review vendor requests to update approved shop details.</p>
+  </header>
 
-      {message && <div className="admin-change-message">{message}</div>}
+  {message && (
+    <section className="admin-change-message" role="status">
+      <p>{message}</p>
+    </section>
+  )}
 
-      <div className="admin-change-filters">
-        <button onClick={() => setFilter('pending')} className={filter === 'pending' ? 'active' : ''}>
-          Pending
-        </button>
-        <button onClick={() => setFilter('approved')} className={filter === 'approved' ? 'active' : ''}>
-          Approved
-        </button>
-        <button onClick={() => setFilter('rejected')} className={filter === 'rejected' ? 'active' : ''}>
-          Rejected
-        </button>
-        <button onClick={() => setFilter('all')} className={filter === 'all' ? 'active' : ''}>
-          All
-        </button>
-      </div>
+  <nav
+    className="admin-change-filters"
+    aria-label="Request filters"
+  >
+    <button
+      onClick={() => setFilter('pending')}
+      className={filter === 'pending' ? 'active' : ''}
+    >
+      Pending
+    </button>
 
-      {filteredRequests.length === 0 ? (
-        <div className="empty-state">
-          No vendor detail change requests found.
-        </div>
-      ) : (
-        <div className="admin-request-list">
-          {filteredRequests.map((request) => (
-            <div key={request.id} className="admin-request-card">
-              <div className="request-card-header">
-                <div>
-                  <h2>{request.vendorName || request.vendorEmail || 'Vendor'}</h2>
-                  <p>{request.vendorEmail}</p>
-                  <small>Submitted: {formatDate(request.createdAt)}</small>
-                </div>
-                <span className={`status-pill ${request.status}`}>
-                  {request.status}
-                </span>
-              </div>
+    <button
+      onClick={() => setFilter('approved')}
+      className={filter === 'approved' ? 'active' : ''}
+    >
+      Approved
+    </button>
 
-              <div className="comparison-grid">
-                <div>
-                  <h3>Current Details</h3>
-                  <p><strong>Name:</strong> {request.currentProfile?.businessName || 'N/A'}</p>
-                  <p><strong>Description:</strong> {request.currentProfile?.businessDescription || 'N/A'}</p>
-                  <p><strong>Phone:</strong> {request.currentProfile?.businessPhone || 'N/A'}</p>
-                  <p><strong>Address:</strong> {request.currentProfile?.businessAddress || 'N/A'}</p>
-                  <p><strong>Type:</strong> {request.currentProfile?.businessType || 'N/A'}</p>
-                </div>
+    <button
+      onClick={() => setFilter('rejected')}
+      className={filter === 'rejected' ? 'active' : ''}
+    >
+      Rejected
+    </button>
 
-                <div>
-                  <h3>Requested Details</h3>
-                  <p><strong>Name:</strong> {request.requestedProfile?.businessName || 'N/A'}</p>
-                  <p><strong>Description:</strong> {request.requestedProfile?.businessDescription || 'N/A'}</p>
-                  <p><strong>Phone:</strong> {request.requestedProfile?.businessPhone || 'N/A'}</p>
-                  <p><strong>Address:</strong> {request.requestedProfile?.businessAddress || 'N/A'}</p>
-                  <p><strong>Type:</strong> {request.requestedProfile?.businessType || 'N/A'}</p>
-                </div>
-              </div>
+    <button
+      onClick={() => setFilter('all')}
+      className={filter === 'all' ? 'active' : ''}
+    >
+      All
+    </button>
+  </nav>
 
-              {request.status === 'pending' && (
-                <div className="review-section">
-                  <textarea
-                    placeholder="Optional review notes"
-                    value={reviewNotes[request.id] || ''}
-                    onChange={(event) => handleNotesChange(request.id, event.target.value)}
-                  />
+  {filteredRequests.length === 0 ? (
+    <section className="empty-state">
+      <p>No vendor detail change requests found.</p>
+    </section>
+  ) : (
+    <section className="admin-request-list">
+      {filteredRequests.map((request) => (
+        <article
+          key={request.id}
+          className="admin-request-card"
+        >
+          <header className="request-card-header">
+            <section>
+              <h2>
+                {request.vendorName ||
+                  request.vendorEmail ||
+                  'Vendor'}
+              </h2>
 
-                  <div className="review-buttons">
-                    <button className="approve-btn" onClick={() => handleApprove(request.id)}>
-                      Approve
-                    </button>
-                    <button className="reject-btn" onClick={() => handleReject(request.id)}>
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              )}
+              <address>{request.vendorEmail}</address>
 
-              {request.status !== 'pending' && (
-                <div className="reviewed-info">
-                  <p><strong>Review notes:</strong> {request.reviewNotes || 'No notes provided.'}</p>
-                  <p><strong>Reviewed:</strong> {formatDate(request.reviewedAt)}</p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+              <small>
+                Submitted:{' '}
+                <time>
+                  {formatDate(request.createdAt)}
+                </time>
+              </small>
+            </section>
+
+            <mark className={`status-pill ${request.status}`}>
+              {request.status}
+            </mark>
+          </header>
+
+          <section className="comparison-grid">
+            <article>
+              <h3>Current Details</h3>
+
+              <p>
+                <strong>Name:</strong>{' '}
+                {request.currentProfile?.businessName ||
+                  'N/A'}
+              </p>
+
+              <p>
+                <strong>Description:</strong>{' '}
+                {request.currentProfile
+                  ?.businessDescription || 'N/A'}
+              </p>
+
+              <p>
+                <strong>Phone:</strong>{' '}
+                {request.currentProfile?.businessPhone ||
+                  'N/A'}
+              </p>
+
+              <p>
+                <strong>Address:</strong>{' '}
+                {request.currentProfile?.businessAddress ||
+                  'N/A'}
+              </p>
+
+              <p>
+                <strong>Type:</strong>{' '}
+                {request.currentProfile?.businessType ||
+                  'N/A'}
+              </p>
+            </article>
+
+            <article>
+              <h3>Requested Details</h3>
+
+              <p>
+                <strong>Name:</strong>{' '}
+                {request.requestedProfile?.businessName ||
+                  'N/A'}
+              </p>
+
+              <p>
+                <strong>Description:</strong>{' '}
+                {request.requestedProfile
+                  ?.businessDescription || 'N/A'}
+              </p>
+
+              <p>
+                <strong>Phone:</strong>{' '}
+                {request.requestedProfile?.businessPhone ||
+                  'N/A'}
+              </p>
+
+              <p>
+                <strong>Address:</strong>{' '}
+                {request.requestedProfile?.businessAddress ||
+                  'N/A'}
+              </p>
+
+              <p>
+                <strong>Type:</strong>{' '}
+                {request.requestedProfile?.businessType ||
+                  'N/A'}
+              </p>
+            </article>
+          </section>
+
+          {request.status === 'pending' && (
+            <section className="review-section">
+              <textarea
+                placeholder="Optional review notes"
+                value={reviewNotes[request.id] || ''}
+                onChange={(event) =>
+                  handleNotesChange(
+                    request.id,
+                    event.target.value
+                  )
+                }
+              />
+
+              <footer className="review-buttons">
+                <button
+                  className="approve-btn"
+                  onClick={() =>
+                    handleApprove(request.id)
+                  }
+                >
+                  Approve
+                </button>
+
+                <button
+                  className="reject-btn"
+                  onClick={() =>
+                    handleReject(request.id)
+                  }
+                >
+                  Reject
+                </button>
+              </footer>
+            </section>
+          )}
+
+          {request.status !== 'pending' && (
+            <section className="reviewed-info">
+              <p>
+                <strong>Review notes:</strong>{' '}
+                {request.reviewNotes ||
+                  'No notes provided.'}
+              </p>
+
+              <p>
+                <strong>Reviewed:</strong>{' '}
+                <time>
+                  {formatDate(request.reviewedAt)}
+                </time>
+              </p>
+            </section>
+          )}
+        </article>
+      ))}
+    </section>
+  )}
+</main>
   );
 }
