@@ -22,7 +22,9 @@ describe('ProtectedRoute', () => {
 
     const element = ProtectedRoute({ children: "Secret", allowedRoles: ["admin"] })
 
-    expect(element.props.children).toBe("Loading...")
+    expect(
+        element.props.children.props.children.props.children
+    ).toBe("Loading...")
   })
 
   /**
